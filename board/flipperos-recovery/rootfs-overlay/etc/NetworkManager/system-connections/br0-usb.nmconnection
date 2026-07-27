@@ -1,0 +1,9 @@
+# USB-C gadget (flipusb0) as a bridge slave: a plugged-in computer joins the
+# recovery LAN and gets 10.0.0.x from dnsmasq (no default route pushed).
+[connection]
+id=br0-usb
+type=ethernet
+interface-name=flipusb0
+master=br0
+slave-type=bridge
+autoconnect=true

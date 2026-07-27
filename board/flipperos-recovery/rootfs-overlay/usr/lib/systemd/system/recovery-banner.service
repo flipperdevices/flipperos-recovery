@@ -1,0 +1,12 @@
+[Unit]
+Description=Generate the recovery login banner (/run/recovery-banner)
+After=NetworkManager.service systemd-hostnamed.service
+Wants=NetworkManager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c '/usr/bin/recovery-banner --pre > /run/recovery-banner'
+
+[Install]
+WantedBy=multi-user.target

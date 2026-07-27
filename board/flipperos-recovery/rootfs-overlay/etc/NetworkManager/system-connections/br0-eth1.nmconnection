@@ -1,0 +1,7 @@
+[connection]
+id=br0-eth1
+type=ethernet
+interface-name=end1
+master=br0
+slave-type=bridge
+autoconnect=true

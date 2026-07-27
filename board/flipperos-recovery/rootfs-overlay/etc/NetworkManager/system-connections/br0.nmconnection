@@ -1,0 +1,23 @@
+# Recovery LAN bridge: WiFi-AP + end1 + flipusb0 share this L2 segment. Static IP
+# 10.0.0.1 - the SAME address the main OS serves on flipusb0 (flipusb0-static),
+# so a connected PC reaches the Flipper at 10.0.0.1 on either OS. NOT
+# ipv4.method=shared - recovery must never become a client's default gateway
+# (dnsmasq serves DHCP here without a router option; see /etc/dnsmasq.d). The
+# 169.254.0.1/16 link-local (also mirrored from the main OS) keeps it reachable
+# for a zero-config host even before DHCP.
+[connection]
+id=br0
+type=bridge
+interface-name=br0
+autoconnect=true
+
+[bridge]
+stp=false
+
+[ipv4]
+method=manual
+address1=10.0.0.1/24
+address2=169.254.0.1/16
+
+[ipv6]
+method=ignore

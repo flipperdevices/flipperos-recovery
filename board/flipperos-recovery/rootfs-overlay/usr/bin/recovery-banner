@@ -1,0 +1,51 @@
+#!/bin/sh
+# recovery-banner - recovery login banner.
+#   recovery-banner --pre  identity + reachable IPs. Shown PRE-login by dropbear -b
+#                          (from /run/recovery-banner, written by recovery-banner.service).
+#   recovery-banner        identity + compact quick-help, NO IP list (a logged-in user
+#                          already knows the address). Shown POST-login via
+#                          /etc/profile.d + /root/.bashrc.
+. /etc/os-release 2>/dev/null || true
+
+board=$(tr '\0' '\n' < /sys/firmware/devicetree/base/compatible 2>/dev/null | awk -F, '$2!="rk3576"{print $2; exit}')
+board=${board:-rk3576}
+serial=$(tr -d '\0' < /sys/firmware/devicetree/base/serial-number 2>/dev/null || cat /etc/machine-id 2>/dev/null)
+mem=$(awk '/MemTotal/{printf "%.1f GB",$2/1024/1024}' /proc/meminfo 2>/dev/null)
+host=$(hostname 2>/dev/null || echo flipper-recovery)
+
+# --- identity box: shown both pre- and post-login ---
+cat <<EOF
+
+  ================= FlipperOS Recovery ===================================================
+    Board:    $board
+    Serial:   $serial
+    Version:  ${BUILD_GIT:-unknown}      Kernel: $(uname -r)
+    Memory:   $mem
+    Login:    ssh root@${host}.local
+    Default credentials:  root / flipperone
+  ========================================================================================
+EOF
+
+# --- PRE-login: reachable IPs only (helps you find the box before you log in) ---
+if [ "$1" = "--pre" ]; then
+	cat <<EOF
+
+  Reachable now:
+$(ip -o -4 addr show 2>/dev/null | awk '$2!="lo"{printf "    %-8s %s\n",$2,$4}')
+    (USB-C / WiFi-AP clients get an address from br0 -> ssh root@10.0.0.1)
+
+EOF
+	exit 0
+fi
+
+# --- POST-login: compact quick-help (no IP list) ---
+cat <<EOF
+  Network:  nmtui  |  nmcli dev  |  nmcli dev wifi list
+  WiFi (set country first:  iw reg set <CC>):
+      join:  nmcli dev wifi connect <SSID> password <PSK>
+      AP:    nmcli con up br0-wifi-ap        (FlipperOne-Recovery / flipperone)
+  USB:   MTP -> /mnt/mtp   |   attach storage:  usb-gadget-setup.sh start --sdcard|--sda
+         detach storage:  usb-gadget-setup.sh eject
+  ========================================================================================
+
+EOF

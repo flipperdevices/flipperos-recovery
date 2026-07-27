@@ -1,0 +1,18 @@
+# Buildroot's dnsmasq ships only a SysV init, no systemd unit, so provide one.
+# The recovery config lives in /etc/dnsmasq.d/recovery-br0.conf; the stock
+# /etc/dnsmasq.conf has no conf-dir, so load our file explicitly (deterministic).
+[Unit]
+Description=dnsmasq - DHCP for the recovery bridge br0
+Documentation=man:dnsmasq(8)
+After=network.target
+
+[Service]
+Type=simple
+# fail fast on a bad config instead of flapping
+ExecStartPre=/usr/sbin/dnsmasq --test --conf-file=/etc/dnsmasq.d/recovery-br0.conf
+ExecStart=/usr/sbin/dnsmasq -k --conf-file=/etc/dnsmasq.d/recovery-br0.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

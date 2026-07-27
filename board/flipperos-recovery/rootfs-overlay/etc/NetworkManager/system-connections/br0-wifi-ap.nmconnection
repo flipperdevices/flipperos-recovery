@@ -1,0 +1,22 @@
+# Recovery WiFi AP, bridged into br0. autoconnect=false: an AP needs a regulatory
+# country (world domain "00" forbids beaconing) which we don't ship - bring it up
+# with:  iw reg set <CC> ; nmcli con up br0-wifi-ap
+[connection]
+id=br0-wifi-ap
+type=wifi
+master=br0
+slave-type=bridge
+autoconnect=false
+
+[wifi]
+mode=ap
+band=bg
+channel=6
+ssid=FlipperOne-Recovery
+
+[wifi-security]
+key-mgmt=wpa-psk
+proto=rsn
+pairwise=ccmp
+group=ccmp
+psk=flipperone
