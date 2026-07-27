@@ -1,0 +1,2 @@
+# Recovery-tree packages. Add `source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/<pkg>/Config.in"`
+# lines here as packages are added (e.g. a dedicated recovery application).
