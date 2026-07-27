@@ -213,3 +213,12 @@ BR2_TARGET_ROOTFS_CPIO=y
 BR2_TARGET_ROOTFS_CPIO_ZSTD=y
 # BR2_TARGET_ROOTFS_TAR is not set
 
+# ---------------------------------------------------------------------------
+# Flashable SD test image (optional, native). genimage assembles a GPT disk with
+# an ext4 BLS boot partition (Image + dtb + initrd + loader entry) that the
+# device's U-Boot 'bls' bootmeth boots. post-image.sh stages the boot tree and
+# drives genimage; set UBOOT= to embed the Rockchip loader for standalone SD boot.
+# The final UFS-LU flash is the device's Falcon path, not this test image.
+# ---------------------------------------------------------------------------
+BR2_PACKAGE_HOST_GENIMAGE=y
+BR2_ROOTFS_POST_IMAGE_SCRIPT="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/post-image.sh"
