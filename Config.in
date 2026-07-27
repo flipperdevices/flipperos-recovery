@@ -1,0 +1,3 @@
+# Packages provided by this external tree are sourced here.
+# (none yet - a recovery-app package can be added under package/ later)
+source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/Config.in"

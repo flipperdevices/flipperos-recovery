@@ -1,0 +1,9 @@
+# Out-of-tree build output and download cache (images land in output/images/).
+/output/
+/dl/
+
+# Logs.
+/build*.log
+
+# Editor settings, not shipped.
+/.vscode/
