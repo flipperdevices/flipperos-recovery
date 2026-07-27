@@ -1,0 +1,156 @@
+# FlipperOS recovery - minimal glibc/systemd initramfs for Flipper One (RK3576).
+# Output: output/images/rootfs.cpio + rootfs.cpio.zst. No kernel, no bootloader
+# (those live in flipper-linux-kernel / flipperone-linux-build-scripts). The cpio
+# is assembled with the kernel + DTB into a bootable image (GPT + ext4 boot part
+# with a U-Boot BLS entry) and flashed to its own UFS LU. It runs entirely from
+# RAM: writable root, holds nothing open on storage.
+
+# ---------------------------------------------------------------------------
+# Architecture: RK3576 is Cortex-A72/A53 big.LITTLE. A53-tuned code runs on both.
+# ---------------------------------------------------------------------------
+BR2_aarch64=y
+BR2_cortex_a53=y
+
+# ---------------------------------------------------------------------------
+# Toolchain: Buildroot-internal, glibc. Build target packages optimized for size.
+# ---------------------------------------------------------------------------
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
+BR2_OPTIMIZE_S=y
+# Kernel + uapi headers both come from the src/linux SUBMODULE (pinned by gitlink),
+# via override-srcdir (see local.mk): no download, and the Image and the headers
+# the userland compiles against are the EXACT same commit. The series gate
+# (7.0.x+) tells Buildroot how to feature-gate packages. REPO_URL/REPO_VERSION are
+# nominal (override-srcdir supersedes the fetch), kept only to satisfy the config.
+BR2_KERNEL_HEADERS_CUSTOM_GIT=y
+BR2_KERNEL_HEADERS_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
+BR2_KERNEL_HEADERS_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_7_0=y
+
+# Build the kernel Image + dtb natively from the same src/linux submodule
+# (override-srcdir), using the committed monolithic defconfig (regenerate with
+# scripts/regen-defconfig.sh). local.mk points both linux + linux-headers at it.
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_GIT=y
+BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
+BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/linux-recovery.defconfig"
+BR2_LINUX_KERNEL_IMAGE=y
+BR2_LINUX_KERNEL_DTS_SUPPORT=y
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="rockchip/rk3576-flipper-one-rev-f0b0c1"
+BR2_PACKAGE_OVERRIDE_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/local.mk"
+# C++ support in the toolchain (selects BR2_INSTALL_LIBSTDCPP): required by
+# gptfdisk (gdisk/sgdisk). ~1 MB of libstdc++ in the image.
+BR2_TOOLCHAIN_BUILDROOT_CXX=y
+
+# ---------------------------------------------------------------------------
+# Init: systemd. No BusyBox - /bin/sh is bash, all utilities come from
+# coreutils / util-linux. For an initramfs Buildroot installs a pre-init /init
+# that mounts devtmpfs and execs /sbin/init (systemd); systemd then runs as the
+# real PID 1 (no /etc/initrd-release, so it does not try to switch-root).
+# ---------------------------------------------------------------------------
+BR2_INIT_SYSTEMD=y
+# BR2_PACKAGE_BUSYBOX is not set
+BR2_PACKAGE_BASH=y
+BR2_SYSTEM_BIN_SH_BASH=y
+
+# systemd, trimmed: keep networkd/resolved/timesyncd (+ udev, always on); drop
+# the hardware database and services a RAM recovery never uses.
+# Networking is managed by NetworkManager (below), not systemd-networkd.
+# BR2_PACKAGE_SYSTEMD_NETWORKD is not set
+BR2_PACKAGE_SYSTEMD_RESOLVED=y
+BR2_PACKAGE_SYSTEMD_TIMESYNCD=y
+# BR2_PACKAGE_SYSTEMD_HWDB is not set
+# BR2_PACKAGE_SYSTEMD_PSTORE is not set
+# BR2_PACKAGE_SYSTEMD_HOSTNAMED is not set
+
+# ---------------------------------------------------------------------------
+# Core userland: coreutils + util-linux.
+# ---------------------------------------------------------------------------
+BR2_PACKAGE_COREUTILS=y
+BR2_PACKAGE_UTIL_LINUX=y
+BR2_PACKAGE_UTIL_LINUX_BINARIES=y
+BR2_PACKAGE_UTIL_LINUX_LIBBLKID=y
+BR2_PACKAGE_UTIL_LINUX_LIBFDISK=y
+BR2_PACKAGE_UTIL_LINUX_LIBMOUNT=y
+BR2_PACKAGE_UTIL_LINUX_LIBSMARTCOLS=y
+BR2_PACKAGE_UTIL_LINUX_LIBUUID=y
+BR2_PACKAGE_UTIL_LINUX_MOUNT=y
+BR2_PACKAGE_UTIL_LINUX_AGETTY=y
+BR2_PACKAGE_UTIL_LINUX_LOGIN=y
+BR2_PACKAGE_UTIL_LINUX_SULOGIN=y
+BR2_PACKAGE_UTIL_LINUX_LOSETUP=y
+BR2_PACKAGE_UTIL_LINUX_FSCK=y
+BR2_PACKAGE_UTIL_LINUX_WIPEFS=y
+BR2_PACKAGE_UTIL_LINUX_RFKILL=y
+
+# Common userland tools BusyBox would normally provide. With no BusyBox we ship
+# none by default, so add the ones a recovery shell actually needs (this also
+# silences systemd's /etc/profile.d shell scripts, which call grep/sed).
+BR2_PACKAGE_GREP=y
+BR2_PACKAGE_SED=y
+BR2_PACKAGE_MAWK=y
+BR2_PACKAGE_FINDUTILS=y
+BR2_PACKAGE_TAR=y
+BR2_PACKAGE_GZIP=y
+BR2_PACKAGE_LESS=y
+BR2_PACKAGE_NANO=y
+BR2_PACKAGE_PROCPS_NG=y
+
+
+# ---------------------------------------------------------------------------
+# Storage / partition tooling.
+# ---------------------------------------------------------------------------
+BR2_PACKAGE_E2FSPROGS=y
+BR2_PACKAGE_E2FSPROGS_RESIZE2FS=y
+# dosfstools tools are individually gated; without these it installs nothing.
+BR2_PACKAGE_DOSFSTOOLS=y
+BR2_PACKAGE_DOSFSTOOLS_MKFS_FAT=y
+BR2_PACKAGE_DOSFSTOOLS_FSCK_FAT=y
+BR2_PACKAGE_PARTED=y
+BR2_PACKAGE_GPTFDISK=y
+BR2_PACKAGE_GPTFDISK_GDISK=y
+BR2_PACKAGE_GPTFDISK_SGDISK=y
+BR2_PACKAGE_NVME=y
+BR2_PACKAGE_SG3_UTILS=y
+# btrfs tooling (mkfs.btrfs, btrfs, btrfsck/fsck.btrfs). Debug-only binaries are
+# trimmed in post-build.sh to stay minimal.
+BR2_PACKAGE_BTRFS_PROGS=y
+# compsize: report real on-disk (post-compression) size of btrfs files.
+# Custom package in package/compsize (builds against btrfs-progs headers).
+BR2_PACKAGE_COMPSIZE=y
+
+
+# ---------------------------------------------------------------------------
+# HTTPS fetch (recovery images/artifacts): curl over OpenSSL + CA bundle.
+# ---------------------------------------------------------------------------
+# zstd CLI: the recovery/artifact ecosystem is zstd; needed to decompress/compress
+# .zst on the device (libzstd is already pulled in as a dependency).
+BR2_PACKAGE_ZSTD=y
+# jq: parse JSON (recovery manifests, curl API responses).
+BR2_PACKAGE_JQ=y
+
+# Audio (Flipper One NAU8822): ALSA userspace to play/mix (codec boots muted, so
+# amixer/alsactl are needed to unmute + set volume). alsa-lib pulled automatically.
+BR2_PACKAGE_ALSA_UTILS=y
+BR2_PACKAGE_ALSA_UTILS_APLAY=y
+BR2_PACKAGE_ALSA_UTILS_AMIXER=y
+BR2_PACKAGE_ALSA_UTILS_ALSAMIXER=y
+BR2_PACKAGE_ALSA_UTILS_ALSACTL=y
+BR2_PACKAGE_ALSA_UTILS_SPEAKER_TEST=y
+
+BR2_PACKAGE_OPENSSL=y
+BR2_PACKAGE_LIBCURL=y
+BR2_PACKAGE_LIBCURL_CURL=y
+BR2_PACKAGE_LIBCURL_OPENSSL=y
+BR2_PACKAGE_CA_CERTIFICATES=y
+
+
+# ---------------------------------------------------------------------------
+# Image: initramfs only. zstd-compressed cpio (kernel needs CONFIG_RD_ZSTD; see
+# board/flipperos-recovery/linux.fragment). Uncompressed rootfs.cpio kept too.
+# ---------------------------------------------------------------------------
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_CPIO_ZSTD=y
+# BR2_TARGET_ROOTFS_TAR is not set
+
