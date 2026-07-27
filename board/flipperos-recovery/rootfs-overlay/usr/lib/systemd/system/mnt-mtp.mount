@@ -1,0 +1,14 @@
+[Unit]
+Description=Recovery MTP scratch area (tmpfs, up to 50%% of RAM)
+DefaultDependencies=no
+Before=local-fs.target umount.target usb-ncm-msc-mtp-gadget.service
+Conflicts=umount.target
+
+[Mount]
+What=tmpfs
+Where=/mnt/mtp
+Type=tmpfs
+Options=size=50%%,mode=0755,nosuid,nodev
+
+[Install]
+WantedBy=local-fs.target

@@ -1,0 +1,4 @@
+# dropbear options (read by dropbear.service via EnvironmentFile). Show the
+# recovery banner PRE-login. /run/recovery-banner is written at boot by
+# recovery-banner.service (and refreshed at each shell via profile.d/.bashrc).
+DROPBEAR_ARGS="-b /run/recovery-banner"

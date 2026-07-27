@@ -1,0 +1,8 @@
+# Buildroot users table (BR2_ROOTFS_USERS_TABLES).
+# systemd ships tmpfiles.d/systemd-network.conf unconditionally (it chowns
+# /run/systemd/netif and /var/lib/systemd/network to systemd-network), but the
+# systemd-network user is only created by the systemd package when networkd is
+# enabled. We manage networking with NetworkManager (networkd disabled), so
+# create the user here to satisfy those paths and the image packer.
+# fields: user uid group gid password home shell groups comment
+systemd-network -1 systemd-network -1 * - - - systemd Network Management

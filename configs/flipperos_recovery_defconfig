@@ -97,6 +97,44 @@ BR2_PACKAGE_LESS=y
 BR2_PACKAGE_NANO=y
 BR2_PACKAGE_PROCPS_NG=y
 
+# ---------------------------------------------------------------------------
+# Networking + SSH (dropbear ships a systemd unit; enabled via the overlay).
+# ---------------------------------------------------------------------------
+BR2_PACKAGE_IPROUTE2=y
+BR2_PACKAGE_IPUTILS=y
+BR2_PACKAGE_DROPBEAR=y
+
+# --- WiFi: MediaTek MT7921U (USB, chip id 0e8d:7961; mt7921u/mt76 driver).
+#     Ship both roles, chosen at boot by kernel cmdline recovery.wifi=ap|sta|off
+#     (default ap) via the recovery-wifi service in the overlay:
+#       ap  -> hostapd + networkd DHCP server (broadcast a recovery SSID)
+#       sta -> wpa_supplicant + networkd DHCP client (join a known SSID)
+#     No dnsmasq: systemd-networkd provides the DHCP server. Firmware is the
+#     upstream MediaTek MT7961 blob subset (WIFI_RAM_CODE + patch_mcu). ---
+BR2_PACKAGE_LINUX_FIRMWARE=y
+BR2_PACKAGE_LINUX_FIRMWARE_MEDIATEK_MT7921=y
+# MT7921U is a combo WiFi+BT device sharing one USB endpoint; without the BT
+# firmware, btmtk resets the whole device in a loop and WiFi never comes up.
+BR2_PACKAGE_LINUX_FIRMWARE_MEDIATEK_MT7921_BT=y
+BR2_PACKAGE_WIRELESS_REGDB=y
+BR2_PACKAGE_IW=y
+# wpa_supplicant is the NetworkManager WiFi backend; NM drives it over D-Bus, so
+# the D-Bus control interface is required. AP_SUPPORT is what lets NM run the
+# recovery WiFi AP (br0-wifi-ap) through wpa_supplicant, so no hostapd is needed.
+BR2_PACKAGE_WPA_SUPPLICANT=y
+BR2_PACKAGE_WPA_SUPPLICANT_NL80211=y
+BR2_PACKAGE_WPA_SUPPLICANT_DBUS=y
+BR2_PACKAGE_WPA_SUPPLICANT_AP_SUPPORT=y
+BR2_PACKAGE_WPA_SUPPLICANT_CLI=y
+BR2_PACKAGE_WPA_SUPPLICANT_WPA3=y
+
+# NetworkManager owns all interfaces (ethernet uplink, WiFi AP/station via
+# nmtui/nmcli, and the USB-gadget bridge). Connection profiles + a br0 bridge
+# ship in the overlay. dnsmasq serves DHCP on the recovery bridge (no gateway).
+BR2_PACKAGE_NETWORK_MANAGER=y
+BR2_PACKAGE_NETWORK_MANAGER_TUI=y
+BR2_PACKAGE_NETWORK_MANAGER_CLI=y
+BR2_PACKAGE_DNSMASQ=y
 
 # ---------------------------------------------------------------------------
 # Storage / partition tooling.
@@ -120,6 +158,9 @@ BR2_PACKAGE_BTRFS_PROGS=y
 # Custom package in package/compsize (builds against btrfs-progs headers).
 BR2_PACKAGE_COMPSIZE=y
 
+# --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
+#     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---
+BR2_PACKAGE_UMTPRD=y
 
 # ---------------------------------------------------------------------------
 # HTTPS fetch (recovery images/artifacts): curl over OpenSSL + CA bundle.
@@ -145,6 +186,24 @@ BR2_PACKAGE_LIBCURL_CURL=y
 BR2_PACKAGE_LIBCURL_OPENSSL=y
 BR2_PACKAGE_CA_CERTIFICATES=y
 
+# ---------------------------------------------------------------------------
+# System identity + credentials. Fixed root password (change before release).
+# A serial-console login is auto-started by systemd-getty-generator from the
+# kernel console= argument (uses agetty --keep-baud, so any baud works).
+# ---------------------------------------------------------------------------
+BR2_TARGET_GENERIC_HOSTNAME="flipper-recovery"
+BR2_TARGET_GENERIC_ISSUE="FlipperOS Recovery"
+BR2_TARGET_GENERIC_ROOT_PASSWD="flipperone"
+
+# ---------------------------------------------------------------------------
+# Overlay (systemd drop-ins / units / network config) + trim script.
+# ---------------------------------------------------------------------------
+# Create the systemd-network user (systemd ships its tmpfiles unconditionally,
+# but only creates the user when networkd is enabled - we use NetworkManager).
+BR2_ROOTFS_USERS_TABLES="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/users.table"
+
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/rootfs-overlay"
+BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/post-build.sh"
 
 # ---------------------------------------------------------------------------
 # Image: initramfs only. zstd-compressed cpio (kernel needs CONFIG_RD_ZSTD; see

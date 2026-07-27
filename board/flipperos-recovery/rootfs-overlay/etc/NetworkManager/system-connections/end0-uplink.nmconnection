@@ -1,0 +1,12 @@
+# Primary wired port = uplink (DHCP client, management/internet). Not bridged.
+[connection]
+id=end0-uplink
+type=ethernet
+interface-name=end0
+autoconnect=true
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
