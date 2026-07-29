@@ -1,0 +1,11 @@
+#!/bin/sh
+# Force an immediate time sync the moment NetworkManager confirms real internet
+# connectivity (its HTTP check in conf.d/00-recovery.conf reached the net), so a
+# wrong/blank RTC is corrected before any TLS use instead of waiting for
+# timesyncd's own poll interval. Gated on NM connectivity = full, so there is no
+# trigger on a default route that goes nowhere and nothing happens offline.
+# NM passes $1 = interface, $2 = action, and CONNECTIVITY_STATE on this action.
+[ "$2" = connectivity-change ] || exit 0
+[ "$CONNECTIVITY_STATE" = full ] || exit 0
+# restarting timesyncd makes it re-query NTP right now (it syncs on start)
+systemctl try-restart systemd-timesyncd 2>/dev/null || true
