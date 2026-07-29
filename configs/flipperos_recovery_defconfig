@@ -103,6 +103,12 @@ BR2_PACKAGE_PROCPS_NG=y
 BR2_PACKAGE_IPROUTE2=y
 BR2_PACKAGE_IPUTILS=y
 BR2_PACKAGE_DROPBEAR=y
+# File transfer over the SSH server. gesftpserver gives dropbear an SFTP
+# subsystem (it drops the /usr/libexec/sftp-server symlink dropbear execs), so
+# modern scp (SFTP-based) and sftp work without OpenSSH; rsync covers efficient
+# and resumable copies over the same ssh.
+BR2_PACKAGE_GESFTPSERVER=y
+BR2_PACKAGE_RSYNC=y
 
 # --- WiFi: MediaTek MT7921U (USB, chip id 0e8d:7961; mt7921u/mt76 driver).
 #     Ship both roles, chosen at boot by kernel cmdline recovery.wifi=ap|sta|off
@@ -157,6 +163,9 @@ BR2_PACKAGE_BTRFS_PROGS=y
 # compsize: report real on-disk (post-compression) size of btrfs files.
 # Custom package in package/compsize (builds against btrfs-progs headers).
 BR2_PACKAGE_COMPSIZE=y
+# duperemove: offline dedup - find duplicate extents and submit them to the
+# kernel (btrfs FIDEDUPERANGE). Custom package in package/duperemove (pulls sqlite).
+BR2_PACKAGE_DUPEREMOVE=y
 
 # --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
 #     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---

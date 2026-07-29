@@ -1,0 +1,16 @@
+config BR2_PACKAGE_DUPEREMOVE
+	bool "duperemove"
+	depends on BR2_USE_MMU # sqlite
+	depends on BR2_TOOLCHAIN_HAS_THREADS # pthread + sqlite
+	select BR2_PACKAGE_SQLITE # hashfile database (-lsqlite3)
+	help
+	  duperemove finds duplicate extents across a set of files and
+	  submits them to the kernel for deduplication (btrfs / xfs
+	  FIDEDUPERANGE), reclaiming space without altering file contents.
+	  Pairs with compsize (which reports on-disk compression).
+
+	  https://github.com/markfasheh/duperemove
+
+comment "duperemove needs a toolchain w/ threads"
+	depends on BR2_USE_MMU
+	depends on !BR2_TOOLCHAIN_HAS_THREADS
