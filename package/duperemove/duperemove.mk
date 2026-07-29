@@ -4,20 +4,22 @@
 #
 ################################################################################
 
-DUPEREMOVE_VERSION = 0.14.1
+DUPEREMOVE_VERSION = 0.15.2
 DUPEREMOVE_SITE = $(call github,markfasheh,duperemove,v$(DUPEREMOVE_VERSION))
-DUPEREMOVE_LICENSE = GPL-2.0, BSD-2-Clause (bundled xxhash)
-DUPEREMOVE_LICENSE_FILES = LICENSE LICENSE.xxhash
+DUPEREMOVE_LICENSE = GPL-2.0
+DUPEREMOVE_LICENSE_FILES = LICENSE
 
-# libsqlite3 for the hashfile DB; pkg-config (host-pkgconf) resolves it from the
-# staging sysroot. xxhash is bundled in-tree.
-DUPEREMOVE_DEPENDENCIES = sqlite host-pkgconf
+# 0.15+ links glib-2.0, sqlite3, libbsd and libxxhash (xxhash is no longer
+# bundled), plus util-linux's blkid/mount/uuid - all found via pkg-config from
+# the staging sysroot.
+DUPEREMOVE_DEPENDENCIES = host-pkgconf sqlite libglib2 libbsd xxhash util-linux
 
-# Plain Makefile honouring CC/CFLAGS/LDFLAGS via TARGET_CONFIGURE_OPTS; it calls
-# pkg-config for sqlite3, so pass the target-configured binary.
+# Plain Makefile. Pass VERSION explicitly (the github tarball has no .git, so its
+# git-describe default would be empty) and the target pkg-config so the glib /
+# sqlite / blkid / ... probes resolve against staging rather than the host.
 define DUPEREMOVE_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) $(TARGET_CONFIGURE_OPTS) \
-		PKG_CONFIG="$(PKG_CONFIG_HOST_BINARY)" -C $(@D)
+		VERSION=$(DUPEREMOVE_VERSION) PKG_CONFIG="$(PKG_CONFIG_HOST_BINARY)" -C $(@D)
 endef
 
 # Ship only the main tool (skip the btrfs-extent-same/hashstats helpers).
