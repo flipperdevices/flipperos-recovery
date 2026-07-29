@@ -1,0 +1,4 @@
+# Locally computed (github archive tarball + license files)
+sha256  5970a68e37c1b509448f6d82278ca21403cc7722f6267f7da27723b0749088ea  duperemove-0.14.1.tar.gz
+sha256  c67b595a495dfc6af46516fccbe6d5882d827fafd58907df1b0f0e1aba9c9c98  LICENSE
+sha256  85b62c873075a82287b5cd2dfb9f0b768654e18838ccc644f5ad6b13e0508a83  LICENSE.xxhash
