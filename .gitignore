@@ -7,3 +7,7 @@
 
 # Editor settings, not shipped.
 /.vscode/
+
+# Generated at build time by scripts/regen-defconfig.sh (against the current
+# src/linux); no longer a committed artifact.
+/board/flipperos-recovery/linux-recovery.defconfig

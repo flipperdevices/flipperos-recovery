@@ -1,11 +1,11 @@
 #!/bin/sh
 # build.sh - thin convenience wrapper around the Buildroot-native build.
 #
-# All sources are pinned git submodules (buildroot, src/linux, src/build-scripts);
-# this just makes sure they are checked out, then runs the toplevel Makefile, which
-# forwards to Buildroot. Buildroot builds the toolchain, the monolithic kernel from
-# src/linux (via override-srcdir), the initramfs, and - via post-image.sh - the
-# flashable SD test image. Everything lands in output/images/.
+# buildroot is pinned; the kernel (src/linux) and build-scripts follow their
+# branches (flipper-devel / dev), so this fetches their latest tips. The toplevel
+# Makefile regenerates the monolithic kernel config for that kernel, then Buildroot
+# builds the toolchain, the kernel (via override-srcdir), the initramfs, and - via
+# post-image.sh - the flashable SD test image, all into output/images/.
 #
 #   ./build.sh              check out submodules, then build everything
 #   ./build.sh clean        make clean first, then build
@@ -17,9 +17,12 @@ set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$ROOT"
 
-# submodules are pinned by gitlink (shallow per .gitmodules); a fresh clone builds
-# without a manual `git submodule update`.
-git submodule update --init --recursive
+# buildroot stays at its pinned gitlink; the kernel (src/linux) and build-scripts
+# follow their branches - `--remote` fetches the latest tip per .gitmodules
+# (flipper-devel / dev). The Makefile then regenerates the monolithic kernel config
+# for that kernel, so both track upstream automatically each build.
+git submodule update --init buildroot
+git submodule update --init --remote src/linux src/build-scripts
 
 case "${1:-}" in
 clean)     make clean ;;
