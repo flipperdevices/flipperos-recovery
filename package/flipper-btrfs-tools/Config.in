@@ -1,0 +1,17 @@
+config BR2_PACKAGE_FLIPPER_BTRFS_TOOLS
+	bool "flipper-btrfs-tools"
+	help
+	  Flipper btrfs profile/snapshot tooling: create/delete/rename
+	  profiles, snapshot send/receive/delete, maintenance, and
+	  show-space. Their -d mode targets the unmounted profiles
+	  partition, so they run from recovery against the internal
+	  btrfs. Installed to /usr/local/sbin with the shared
+	  flipper-btrfs.sh / flipper-bls.sh helpers in /usr/lib.
+
+	  Runtime deps (enabled separately in the defconfig): btrfs-progs,
+	  compsize, duperemove, findmnt/flock (util-linux), mawk.
+
+	  migrate-profile is intentionally excluded - it needs dpkg/apt/git
+	  that a Buildroot recovery does not carry.
+
+	  https://github.com/flipperdevices/flipperos-btrfs-tools

@@ -22,7 +22,7 @@ cd "$ROOT"
 # (flipper-devel / dev). The Makefile then regenerates the monolithic kernel config
 # for that kernel, so both track upstream automatically each build.
 git submodule update --init buildroot
-git submodule update --init --remote src/linux src/build-scripts
+git submodule update --init --remote src/linux src/build-scripts src/btrfs-tools
 
 case "${1:-}" in
 clean)     make clean ;;

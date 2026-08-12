@@ -2,3 +2,4 @@
 # lines here as packages are added (e.g. a dedicated recovery application).
 source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/compsize/Config.in"
 source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/duperemove/Config.in"
+source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/flipper-btrfs-tools/Config.in"

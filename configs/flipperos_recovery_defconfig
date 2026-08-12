@@ -171,6 +171,11 @@ BR2_PACKAGE_COMPSIZE=y
 # duperemove: offline dedup - find duplicate extents and submit them to the
 # kernel (btrfs FIDEDUPERANGE). Custom package in package/duperemove (pulls sqlite).
 BR2_PACKAGE_DUPEREMOVE=y
+# flipper-btrfs-tools: profile/snapshot shell tooling (create/delete/rename
+# profiles, snapshot send/receive, maintenance, show-space). Custom package in
+# package/flipper-btrfs-tools, built from the src/btrfs-tools submodule via
+# override-srcdir (local.mk) so it follows the flipperos-btrfs-tools dev branch.
+BR2_PACKAGE_FLIPPER_BTRFS_TOOLS=y
 
 # --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
 #     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---

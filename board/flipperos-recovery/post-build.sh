@@ -50,23 +50,9 @@ else
 	echo "post-build: WARNING - build-scripts submodule missing, USB gadget files NOT installed" >&2
 fi
 
-# --- btrfs profile/snapshot tooling (build-scripts submodule): create/delete/
-#     rename profiles, snapshot send/receive/delete, maintenance, and show-space -
-#     run against the internal btrfs from recovery (their -d mode targets the
-#     unmounted profiles partition). Deps are already in the image (btrfs-progs,
-#     compsize, duperemove, findmnt, flock, mawk). migrate-profile is EXCLUDED: it
-#     needs dpkg/apt/git that a Buildroot recovery does not (and should not) carry;
-#     flipper-accountdb.awk is its helper only, so it is skipped too. ---
-if [ -d "$BS/usr/local/sbin" ]; then
-	install -d "$TARGET/usr/local/sbin" "$TARGET/usr/lib"
-	for t in "$BS"/usr/local/sbin/*; do
-		[ -f "$t" ] || continue
-		case "${t##*/}" in migrate-profile) continue ;; esac
-		install -m 0755 "$t" "$TARGET/usr/local/sbin/"
-	done
-	# shared helpers the tools source (flipper-accountdb.awk is migrate-only, skipped)
-	install -m 0644 "$BS"/usr/lib/flipper-btrfs.sh "$BS"/usr/lib/flipper-bls.sh "$TARGET/usr/lib/"
-fi
+# btrfs profile/snapshot tooling is now the flipper-btrfs-tools package
+# (package/flipper-btrfs-tools, from the src/btrfs-tools submodule), not synced
+# here.
 
 # --- Trim files no package flag removes ---
 # glibc's vectorized-math library: copied in as part of the C runtime, but
@@ -98,4 +84,4 @@ done
 #     ships these 0644 and the AP + bridges never come up. Force 0600 here. ---
 chmod 600 "$TARGET"/etc/NetworkManager/system-connections/*.nmconnection 2>/dev/null || true
 
-echo "post-build: branded os-release, synced USB gadget + btrfs profile tools, removed unused libmvec + btrfs debug tools + N/A systemd units, fixed NM connection perms"
+echo "post-build: branded os-release, synced USB gadget files, removed unused libmvec + btrfs debug tools + N/A systemd units, fixed NM connection perms"
