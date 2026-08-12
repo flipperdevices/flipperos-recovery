@@ -173,8 +173,8 @@ BR2_PACKAGE_COMPSIZE=y
 BR2_PACKAGE_DUPEREMOVE=y
 # flipper-btrfs-tools: profile/snapshot shell tooling (create/delete/rename
 # profiles, snapshot send/receive, maintenance, show-space). Custom package in
-# package/flipper-btrfs-tools, built from the src/btrfs-tools submodule via
-# override-srcdir (local.mk) so it follows the flipperos-btrfs-tools dev branch.
+# package/flipper-btrfs-tools, git-fetched at FLIPPER_BTRFS_TOOLS_VERSION (?= dev,
+# overridable); build.sh passes the dev tip sha so builds follow latest and rebuild.
 BR2_PACKAGE_FLIPPER_BTRFS_TOOLS=y
 
 # --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP

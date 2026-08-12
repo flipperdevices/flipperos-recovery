@@ -8,8 +8,35 @@ TARGET="${TARGET_DIR:-${1:?target directory not provided}}"
 # --- Capture the recovery repo's git version at build time (like the main OS's
 #     BUILD_GIT). Falls back to "unknown" until this tree is a git repo. ---
 REPO="${BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH:-$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)}"
-GIT_VERSION=$(git -C "$REPO" describe --tags --always --dirty 2>/dev/null || true)
+# describe without --dirty, then append -dirty only for real edits to the recovery
+# tree. The submodules (src/linux, src/build-scripts) float to their branch tips
+# on every follow-latest build, so submodule pointer drift is expected and must
+# not count as dirty (--ignore-submodules=all).
+GIT_VERSION=$(git -C "$REPO" describe --tags --always 2>/dev/null || true)
 GIT_VERSION=${GIT_VERSION:-unknown}
+if [ "$GIT_VERSION" != unknown ] \
+   && ! git -C "$REPO" diff --quiet --ignore-submodules=all HEAD 2>/dev/null; then
+	GIT_VERSION="$GIT_VERSION-dirty"
+fi
+# Provenance: the exact sources this image was built from. build.sh floats the
+# kernel + build-scripts submodules to their branch tips (follow-latest), so they
+# routinely differ from the pinned gitlinks BUILD_GIT resolves to; recording them
+# here makes every image self-describing. -dirty marks local edits in a checkout.
+sub_git() {
+	d="$REPO/$1"
+	v=$(git -C "$d" rev-parse --short HEAD 2>/dev/null) || { echo unknown; return; }
+	git -C "$d" diff --quiet HEAD 2>/dev/null || v="$v-dirty"
+	echo "$v"
+}
+KERNEL_GIT=$(sub_git src/linux)
+BUILD_SCRIPTS_GIT=$(sub_git src/build-scripts)
+# btrfs tools are a versioned package: prefer the sha build.sh resolved+exported,
+# else read it off Buildroot's version-keyed build dir.
+BTRFS_TOOLS_GIT=${FLIPPER_BTRFS_TOOLS_VERSION:-}
+if [ -z "$BTRFS_TOOLS_GIT" ]; then
+	BTRFS_TOOLS_GIT=$(basename "$(ls -d "$(dirname "$TARGET")"/build/flipper-btrfs-tools-* 2>/dev/null | head -n1)" 2>/dev/null | sed 's/^flipper-btrfs-tools-//')
+fi
+BTRFS_TOOLS_GIT=$(printf %s "${BTRFS_TOOLS_GIT:-unknown}" | cut -c1-12)
 BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)
 
 # --- Brand the OS identity (Buildroot writes a generic Buildroot os-release
@@ -23,6 +50,9 @@ ANSI_COLOR="1;31"
 VERSION="$GIT_VERSION"
 VERSION_ID="$GIT_VERSION"
 BUILD_GIT="$GIT_VERSION"
+KERNEL_GIT="$KERNEL_GIT"
+BUILD_SCRIPTS_GIT="$BUILD_SCRIPTS_GIT"
+BTRFS_TOOLS_GIT="$BTRFS_TOOLS_GIT"
 BUILD_DATE="$BUILD_DATE"
 EOF
 

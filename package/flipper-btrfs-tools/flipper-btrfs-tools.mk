@@ -4,13 +4,15 @@
 #
 ################################################################################
 
-# Nominal upstream: a github tarball of the dev branch. In this tree the source
-# is always taken from the src/btrfs-tools submodule via
-# FLIPPER_BTRFS_TOOLS_OVERRIDE_SRCDIR (local.mk), so this is never fetched - it
-# only pins a coherent fallback and lets the override rsync then rebuild on
-# change, the same follow-latest wiring the kernel uses.
-FLIPPER_BTRFS_TOOLS_VERSION = dev
-FLIPPER_BTRFS_TOOLS_SITE = $(call github,flipperdevices,flipperos-btrfs-tools,$(FLIPPER_BTRFS_TOOLS_VERSION))
+# Tracks the upstream dev branch by default. VERSION is overridable from the
+# environment or the make command line, so a build can pin an exact commit:
+#   make FLIPPER_BTRFS_TOOLS_VERSION=<sha>
+# build.sh resolves the dev tip to a sha and passes it, so plain builds follow
+# latest AND Buildroot actually rebuilds (the sha keys the build dir - a moving
+# `dev` alone would stay cached and never rebuild).
+FLIPPER_BTRFS_TOOLS_VERSION ?= dev
+FLIPPER_BTRFS_TOOLS_SITE = https://github.com/flipperdevices/flipperos-btrfs-tools.git
+FLIPPER_BTRFS_TOOLS_SITE_METHOD = git
 FLIPPER_BTRFS_TOOLS_LICENSE = MIT
 FLIPPER_BTRFS_TOOLS_LICENSE_FILES = LICENSE
 
