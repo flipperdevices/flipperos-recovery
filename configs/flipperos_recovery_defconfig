@@ -172,10 +172,20 @@ BR2_PACKAGE_COMPSIZE=y
 # kernel (btrfs FIDEDUPERANGE). Custom package in package/duperemove (pulls sqlite).
 BR2_PACKAGE_DUPEREMOVE=y
 # flipper-btrfs-tools: profile/snapshot shell tooling (create/delete/rename
-# profiles, snapshot send/receive, maintenance, show-space). Custom package in
-# package/flipper-btrfs-tools, git-fetched at FLIPPER_BTRFS_TOOLS_VERSION (?= dev,
+# profiles, snapshot send/receive, maintenance, show-space, migrate). Custom package
+# in package/flipper-btrfs-tools, git-fetched at FLIPPER_BTRFS_TOOLS_VERSION (?= dev,
 # overridable); build.sh passes the dev tip sha so builds follow latest and rebuild.
 BR2_PACKAGE_FLIPPER_BTRFS_TOOLS=y
+# git: migrate-profile (above) 3-way merges user files with `git merge-file`; without
+# it (or mergiraf) the merge step cannot run. Its `-d DEV` recovery mode chroots into
+# the profile and uses the profile's own apt, so no apt/dpkg is needed on the host.
+BR2_PACKAGE_GIT=y
+# diffutils: migrate-profile uses `cmp` to tell identical from changed files while
+# classifying the merge (coreutils ships no cmp).
+BR2_PACKAGE_DIFFUTILS=y
+# acl (libacl): migrate-profile carries files with `rsync -aHAX`; the -A (ACLs) needs
+# rsync linked against libacl (xattrs / -X are already supported without it).
+BR2_PACKAGE_ACL=y
 
 # --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
 #     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---

@@ -9,9 +9,10 @@ config BR2_PACKAGE_FLIPPER_BTRFS_TOOLS
 	  flipper-btrfs.sh / flipper-bls.sh helpers in /usr/lib.
 
 	  Runtime deps (enabled separately in the defconfig): btrfs-progs,
-	  compsize, duperemove, findmnt/flock (util-linux), mawk.
-
-	  migrate-profile is intentionally excluded - it needs dpkg/apt/git
-	  that a Buildroot recovery does not carry.
+	  compsize, duperemove, git (migrate-profile's `git merge-file` merge
+	  engine), diffutils (its `cmp`), acl (its `rsync -aHAX` needs ACL
+	  support), findmnt/flock (util-linux), mawk. migrate-profile replays
+	  packages with the profile's own apt inside a chroot, so recovery
+	  itself needs no apt/dpkg.
 
 	  https://github.com/flipperdevices/flipperos-btrfs-tools

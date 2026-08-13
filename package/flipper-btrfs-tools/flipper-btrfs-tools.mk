@@ -17,14 +17,15 @@ FLIPPER_BTRFS_TOOLS_LICENSE = MIT
 FLIPPER_BTRFS_TOOLS_LICENSE_FILES = LICENSE
 
 # Pure shell tools, nothing to compile. Install the two helpers the tools source
-# into /usr/lib, then every profile/snapshot tool into /usr/local/sbin.
-# migrate-profile is skipped (needs dpkg/apt/git the recovery does not carry);
-# the etc/kernel/install.d hooks are dpkg kernel-install glue and do not apply.
+# into /usr/lib, then every profile/snapshot tool into /usr/local/sbin - including
+# migrate-profile: with `-d DEV` it targets the unmounted profiles partition from
+# recovery, replays packages with the profile's own apt via chroot, and 3-way
+# merges files with `git merge-file` (see BR2_PACKAGE_GIT). The etc/kernel/install.d
+# hooks are dpkg kernel-install glue and do not apply, so they are not installed.
 define FLIPPER_BTRFS_TOOLS_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(@D)/usr/lib/flipper-btrfs.sh $(TARGET_DIR)/usr/lib/flipper-btrfs.sh
 	$(INSTALL) -D -m 0644 $(@D)/usr/lib/flipper-bls.sh $(TARGET_DIR)/usr/lib/flipper-bls.sh
 	for t in $(@D)/usr/local/sbin/*; do \
-		case "$${t##*/}" in migrate-profile) continue ;; esac ; \
 		$(INSTALL) -D -m 0755 "$$t" "$(TARGET_DIR)/usr/local/sbin/$${t##*/}" ; \
 	done
 endef

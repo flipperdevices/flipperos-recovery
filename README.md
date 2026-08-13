@@ -141,8 +141,9 @@ sort uniq cut tr wc split tee stat du df ln mkdir chmod chown chroot truncate
 shred base64 sha256sum …`); `login sulogin agetty su-less env` (util-linux).
 
 **Text / search / archive** (no BusyBox applets - real tools): `grep`/`egrep`/`fgrep`,
-`sed`, `awk` (mawk), `find`/`xargs`/`locate` (findutils), `less`, `nano`, `jq`,
-`tar`, `gzip`/`gunzip`/`zcat`, `zstd`/`unzstd`/`zstdcat`/`zstdgrep`, `pcre2grep`.
+`sed`, `awk` (mawk), `find`/`xargs`/`locate` (findutils), `cmp`/`diff` (diffutils),
+`less`, `nano`, `jq`, `tar`, `gzip`/`gunzip`/`zcat`, `zstd`/`unzstd`/`zstdcat`/`zstdgrep`,
+`pcre2grep`, `git` (also migrate-profile's merge engine).
 
 **Processes / system** (procps-ng + systemd): `ps top pgrep pkill pidof kill pmap
 free vmstat uptime watch slabtop`; `systemctl journalctl udevadm dmesg
@@ -187,10 +188,14 @@ speaker-test`.
 **Recovery-specific**: `recovery-banner` (the login banner script). **btrfs
 profile/snapshot tooling** (`flipper-btrfs-tools` package, in `/usr/local/sbin`):
 `list-profiles list-snapshots create-profile delete-profile rename-profile
-create-snapshot send-snapshot receive-snapshot delete-snapshot btrfs-maintenance
-btrfs-show-space add-dtbo`. In recovery `/` is a RAM rootfs, so pass **`-d
-<device>`** to target the unmounted OS partition, e.g. `list-profiles -d /dev/sda3`.
-(`migrate-profile` is intentionally excluded - it needs dpkg/apt/git.)
+create-snapshot send-snapshot receive-snapshot delete-snapshot migrate-profile
+btrfs-maintenance btrfs-show-space add-dtbo`. In recovery `/` is a RAM rootfs, so
+pass **`-d <device>`** to target the unmounted OS partition, e.g. `list-profiles -d
+/dev/sda3`. `migrate-profile -d` carries a profile's user changes onto a newer base:
+it merges files 3-way with `git merge-file` (hence **git**) using `cmp` (hence
+**diffutils**), copies with `rsync -aHAX` (so rsync is built with **acl**), and
+replays packages with the profile's own `apt` inside a chroot, so recovery itself
+needs no apt/dpkg.
 
 ### Boot flow
 
