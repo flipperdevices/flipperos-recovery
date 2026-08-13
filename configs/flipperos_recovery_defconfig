@@ -156,6 +156,14 @@ BR2_PACKAGE_E2FSPROGS_RESIZE2FS=y
 BR2_PACKAGE_DOSFSTOOLS=y
 BR2_PACKAGE_DOSFSTOOLS_MKFS_FAT=y
 BR2_PACKAGE_DOSFSTOOLS_FSCK_FAT=y
+# exfatprogs: mkfs.exfat / fsck.exfat / exfatlabel / tune.exfat for the kernel
+# exFAT driver (CONFIG_EXFAT_FS) - create + repair exFAT, not just mount it.
+BR2_PACKAGE_EXFATPROGS=y
+# ntfs-3g: read-write NTFS via FUSE (kernel legacy CONFIG_NTFS_FS is read-only)
+# plus ntfsprogs (mkntfs/mkfs.ntfs, ntfsfix, ntfsresize, ntfsclone, ntfslabel).
+# Uses ntfs-3g's internal FUSE (no libfuse dep); kernel FUSE is already built in.
+BR2_PACKAGE_NTFS_3G=y
+BR2_PACKAGE_NTFS_3G_NTFSPROGS=y
 BR2_PACKAGE_PARTED=y
 BR2_PACKAGE_GPTFDISK=y
 BR2_PACKAGE_GPTFDISK_GDISK=y

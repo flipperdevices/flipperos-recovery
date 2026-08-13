@@ -122,6 +122,7 @@ make O=/tmp/build                  # override the output directory
 | umtprd | `BR2_PACKAGE_UMTPRD` (upstream) | MTP responder for the USB gadget (serves `/mnt/mtp`) |
 | linux-firmware (MediaTek MT7921 + BT) | `BR2_PACKAGE_LINUX_FIRMWARE_MEDIATEK_MT7921(_BT)` | MT7961 WiFi + BT firmware blobs |
 | e2fsprogs (+resize2fs) / dosfstools / parted / gptfdisk | - | mkfs/repartition/repair/grow (`mkfs.ext4`, `resize2fs`, `mkfs.vfat`, `parted`, `sgdisk`) |
+| exfatprogs / ntfs-3g (+ntfsprogs) | `BR2_PACKAGE_EXFATPROGS` / `BR2_PACKAGE_NTFS_3G` | create/repair exFAT + NTFS (`mkfs.exfat`, `fsck.exfat`, `mkntfs`, `ntfsfix`, `ntfsresize`) and read-write NTFS via `ntfs-3g` FUSE |
 | btrfs-progs + compsize + duperemove | `BR2_PACKAGE_BTRFS_PROGS` / `BR2_PACKAGE_COMPSIZE` / `BR2_PACKAGE_DUPEREMOVE` | main-OS root is **btrfs**: check/repair/resize, on-disk compression report, offline dedup |
 | flipper-btrfs-tools | `BR2_PACKAGE_FLIPPER_BTRFS_TOOLS` | btrfs profile/snapshot management (`-d` targets the unmounted OS partition from recovery) |
 | rsync + sftp-server | `BR2_PACKAGE_RSYNC` / `BR2_PACKAGE_GESFTPSERVER` | file sync, and `scp`/`sftp` over the dropbear SSH server |
@@ -155,10 +156,13 @@ losetup blkdiscard blkzone`, `mount`/`umount`, `swapon`/`mkswap`.
 
 **Filesystems**: ext - `mkfs.ext{2,3,4} e2fsck resize2fs tune2fs dumpe2fs e2label
 e4crypt badblocks filefrag` (e2fsprogs); FAT - `mkfs.fat/mkdosfs fsck.fat`
-(dosfstools); btrfs - `mkfs.btrfs btrfs btrfsck btrfs-convert fsck.btrfs`
-(btrfs-progs) + `compsize` (on-disk compression report) + `duperemove` (offline
-dedup); `fstrim fsfreeze`.
-Kernel also mounts exFAT / NTFS3 / HFS+/HFS / ISO9660 (drivers built-in).
+(dosfstools); exFAT - `mkfs.exfat fsck.exfat exfatlabel tune.exfat` (exfatprogs);
+NTFS - `mkntfs/mkfs.ntfs ntfsfix ntfsresize ntfsclone ntfslabel ntfsinfo` plus the
+read-write `ntfs-3g` FUSE mount (ntfs-3g); btrfs - `mkfs.btrfs btrfs btrfsck
+btrfs-convert fsck.btrfs` (btrfs-progs) + `compsize` (on-disk compression report) +
+`duperemove` (offline dedup); `fstrim fsfreeze`.
+Kernel mounts exFAT + NTFS (legacy read-only driver; `ntfs-3g` adds read-write) +
+HFS+/HFS + ISO9660 (all built-in).
 
 **Storage devices**: `nvme` (nvme-cli); sg3-utils (`sg_* rescan-scsi-bus.sh`) for
 SCSI/**UFS**; `rtcwake`.

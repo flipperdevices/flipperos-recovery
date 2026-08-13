@@ -39,12 +39,14 @@ CONFIG_VFAT_FS=y
 CONFIG_NLS_CODEPAGE_437=y
 CONFIG_NLS_ISO8859_1=y
 # Filesystems recovery may need to mount/repair. Keep ext4/vfat/btrfs (main-OS
-# root is btrfs) + iso9660 + overlayfs, plus exFAT and macOS (HFS/HFS+). NTFS3 is
-# left out on purpose: it refuses to build in (a dependency forbids =y) and this
-# kernel is monolithic (no modules), so a module-only driver cannot ship.
+# root is btrfs) + iso9660 + overlayfs, plus exFAT and macOS (HFS/HFS+). For NTFS
+# use the legacy read-only CONFIG_NTFS_FS driver (pinned here, not just inherited
+# from the base config): NTFS3 (read-write) is left out on purpose because it
+# refuses to build in (a dependency forbids =y) and this kernel is monolithic.
 CONFIG_BTRFS_FS=y
 CONFIG_EXFAT_FS=y
 # CONFIG_NTFS3_FS is not set
+CONFIG_NTFS_FS=y
 CONFIG_HFSPLUS_FS=y
 CONFIG_HFS_FS=y
 # CONFIG_SQUASHFS is not set
