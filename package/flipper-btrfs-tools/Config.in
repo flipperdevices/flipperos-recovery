@@ -5,8 +5,10 @@ config BR2_PACKAGE_FLIPPER_BTRFS_TOOLS
 	  profiles, snapshot send/receive/delete, maintenance, and
 	  show-space. Their -d mode targets the unmounted profiles
 	  partition, so they run from recovery against the internal
-	  btrfs. Installed to /usr/local/sbin with the shared
-	  flipper-btrfs.sh / flipper-bls.sh helpers in /usr/lib.
+	  btrfs. Installed to /usr/local/sbin, with every shared helper
+	  the tools source (flipper-btrfs.sh, flipper-bls.sh,
+	  flipper-rootinfo.sh and the account-merge awk script) in
+	  /usr/lib.
 
 	  Runtime deps (enabled separately in the defconfig): btrfs-progs,
 	  compsize, duperemove, git (migrate-profile's `git merge-file` merge
