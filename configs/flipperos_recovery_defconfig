@@ -245,6 +245,11 @@ BR2_TARGET_GENERIC_ROOT_PASSWD="flipperone"
 # but only creates the user when networkd is enabled - we use NetworkManager).
 BR2_ROOTFS_USERS_TABLES="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/users.table"
 
+# Permission table: 0600 on the NetworkManager connection profiles, which git
+# cannot carry. Buildroot's own table is the default value of this option, so it
+# has to be repeated here to keep it.
+BR2_ROOTFS_DEVICE_TABLE="system/device_table.txt $(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/device_table.txt"
+
 BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/post-build.sh"
 

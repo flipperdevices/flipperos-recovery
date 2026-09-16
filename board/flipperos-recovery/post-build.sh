@@ -8,20 +8,17 @@ TARGET="${TARGET_DIR:-${1:?target directory not provided}}"
 # --- Capture the recovery repo's git version at build time (like the main OS's
 #     BUILD_GIT). Falls back to "unknown" until this tree is a git repo. ---
 REPO="${BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH:-$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)}"
-# describe without --dirty, then append -dirty only for real edits to the recovery
-# tree. The submodules (src/linux, src/build-scripts) float to their branch tips
-# on every follow-latest build, so submodule pointer drift is expected and must
-# not count as dirty (--ignore-submodules=all).
+# describe without --dirty, then append -dirty for any edit to the recovery tree.
+# Every source is pinned in a tracked file now, so an edit anywhere here - the
+# buildroot gitlink included - genuinely changes what the image is.
 GIT_VERSION=$(git -C "$REPO" describe --tags --always 2>/dev/null || true)
 GIT_VERSION=${GIT_VERSION:-unknown}
 if [ "$GIT_VERSION" != unknown ] \
-   && ! git -C "$REPO" diff --quiet --ignore-submodules=all HEAD 2>/dev/null; then
+   && ! git -C "$REPO" diff --quiet HEAD 2>/dev/null; then
 	GIT_VERSION="$GIT_VERSION-dirty"
 fi
-# Provenance: the exact sources this image was built from. build.sh floats the
-# kernel + build-scripts submodules to their branch tips (follow-latest), so they
-# routinely differ from the pinned gitlinks BUILD_GIT resolves to; recording them
-# here makes every image self-describing. -dirty marks local edits in a checkout.
+# Provenance: the exact sources this image was built from, so every image is
+# self-describing even when someone overrides a version on the command line.
 # Versioned packages carry their sha in Buildroot's version-keyed build directory
 # name, which is the sha that was actually built whether it came from the .mk
 # default or an override on the command line.
@@ -83,9 +80,7 @@ for u in NetworkManager-initrd NetworkManager-config-initrd NetworkManager-wait-
 	rm -f "$TARGET/usr/lib/systemd/system/$u.service" "$TARGET/etc/systemd/system/$u.service"
 done
 
-# --- NetworkManager ignores connection profiles that are group/world readable.
-#     git preserves only the exec bit, not the overlay's 0600, so a fresh clone
-#     ships these 0644 and the AP + bridges never come up. Force 0600 here. ---
-chmod 600 "$TARGET"/etc/NetworkManager/system-connections/*.nmconnection 2>/dev/null || true
+# NetworkManager connection profile permissions are set declaratively, in
+# board/flipperos-recovery/device_table.txt (BR2_ROOTFS_DEVICE_TABLE).
 
-echo "post-build: branded os-release, removed unused libmvec + btrfs debug tools + N/A systemd units, fixed NM connection perms"
+echo "post-build: branded os-release, removed unused libmvec + btrfs debug tools + N/A systemd units"
