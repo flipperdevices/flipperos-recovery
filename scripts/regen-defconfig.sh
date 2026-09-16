@@ -2,7 +2,7 @@
 # Regenerate the committed recovery kernel defconfig.
 #
 # Occasional, out-of-band tool (NOT part of the build): run it when you bump the
-# kernel or build-scripts submodule, or edit linux.fragment. It merges the
+# kernel or the config fragments, or edit linux.fragment. It merges the
 # build-scripts base config + feature fragments + our linux.fragment, flips every
 # module to built-in (the recovery kernel is monolithic, the initramfs ships no
 # modules), then `savedefconfig`-trims the result and writes it to
@@ -13,12 +13,35 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 K="$ROOT/src/linux"
-BS="$ROOT/src/build-scripts"
 FRAG="$ROOT/board/flipperos-recovery/linux.fragment"
 OUT="$ROOT/board/flipperos-recovery/linux-recovery.defconfig"
 
 [ -f "$K/Makefile" ]  || { echo "error: kernel submodule missing (git submodule update --init src/linux)" >&2; exit 1; }
-[ -d "$BS/configs" ]  || { echo "error: build-scripts submodule missing (git submodule update --init src/build-scripts)" >&2; exit 1; }
+
+# Scratch checkouts of the pinned sources. They live in the (gitignored) download
+# cache, so they survive `make distclean` and cost one fetch per bump.
+WORK="${REGEN_WORKDIR:-$ROOT/dl/regen}"
+
+# $1 = destination, $2 = url, $3 = commit
+fetch() {
+	[ -n "$3" ] || { echo "error: no pinned version found for $2" >&2; exit 1; }
+	if [ ! -d "$1/.git" ]; then
+		mkdir -p "$1"
+		git init -q "$1"
+		git -C "$1" remote add origin "$2"
+	fi
+	git -C "$1" rev-parse -q --verify "$3^{commit}" >/dev/null 2>&1 \
+		|| git -C "$1" fetch -q --depth 1 origin "$3"
+	git -C "$1" checkout -q --detach "$3"
+}
+
+# The config fragments come from the same build-scripts revision the USB-gadget
+# package installs from, so the kernel config and the gadget files that drive it
+# never describe different commits.
+BS="$WORK/build-scripts"
+fetch "$BS" \
+	https://github.com/flipperdevices/flipperone-linux-build-scripts.git \
+	"$(sed -n 's/^FLIPPER_USB_GADGET_VERSION ?= *//p' "$ROOT/package/flipper-usb-gadget/flipper-usb-gadget.mk")"
 
 # base = build-scripts minconfig + its feature fragments (skip 'logo': needs a
 # generated .ppm we do not build) + our recovery fragment (last, wins).

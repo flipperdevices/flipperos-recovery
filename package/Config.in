@@ -3,3 +3,4 @@
 source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/compsize/Config.in"
 source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/duperemove/Config.in"
 source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/flipper-btrfs-tools/Config.in"
+source "$BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH/package/flipper-usb-gadget/Config.in"

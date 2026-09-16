@@ -1,0 +1,20 @@
+config BR2_PACKAGE_FLIPPER_USB_GADGET
+	bool "flipper-usb-gadget"
+	depends on BR2_INIT_SYSTEMD # systemd units, .link, udev rules
+	help
+	  USB-gadget support for Flipper One, shared with the main OS:
+	  the configfs gadget engine (usb-gadget-setup.sh) and its preset
+	  launchers in /usr/local/bin, the NCM+MSC+MTP composite unit and
+	  the Type-C replug helper, the 10-flipusb.link rename and the two
+	  udev rules that re-manage flipusb0 in NetworkManager and trigger
+	  a replug.
+
+	  Only the composite unit is installed; the other presets' units
+	  would let preset-all enable them and race for the single UDC.
+	  The composite is started by the enable symlink in the board
+	  overlay, and umtprd (BR2_PACKAGE_UMTPRD) serves its MTP function.
+
+	  https://github.com/flipperdevices/flipperone-linux-build-scripts
+
+comment "flipper-usb-gadget needs systemd"
+	depends on !BR2_INIT_SYSTEMD

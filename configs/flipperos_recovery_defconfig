@@ -195,8 +195,11 @@ BR2_PACKAGE_DIFFUTILS=y
 # rsync linked against libacl (xattrs / -X are already supported without it).
 BR2_PACKAGE_ACL=y
 
-# --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
-#     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---
+# --- USB gadget: the gadget engine, units, .link and udev rules come from the
+#     main OS's build-scripts repo as a versioned package (package/flipper-usb-gadget,
+#     git-fetched at FLIPPER_USB_GADGET_VERSION). They build an NCM+MSC+MTP composite
+#     via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---
+BR2_PACKAGE_FLIPPER_USB_GADGET=y
 BR2_PACKAGE_UMTPRD=y
 
 # ---------------------------------------------------------------------------
