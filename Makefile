@@ -20,10 +20,17 @@ export BR2_DL_DIR
 
 BR_MAKE       = $(MAKE) -C $(BR2_EXTERNAL)/buildroot O=$(O) BR2_EXTERNAL=$(BR2_EXTERNAL)
 
+# Buildroot is the only submodule left. Check it out on demand, so a plain clone
+# builds with `make` and there is no wrapper script to read first.
+BR_MAKEFILE   = $(BR2_EXTERNAL)/buildroot/Makefile
+
+$(BR_MAKEFILE):
+	git -C $(BR2_EXTERNAL) submodule update --init buildroot
+
 # Default build: load the defconfig on first use, then build. The monolithic
 # kernel config is a committed artifact, so a build only ever consumes it.
 .DEFAULT_GOAL := all
-all:
+all: | $(BR_MAKEFILE)
 	@test -f $(O)/.config || $(BR_MAKE) flipperos_recovery_defconfig
 	@$(BR_MAKE)
 
@@ -38,5 +45,5 @@ regen-defconfig:
 .PHONY: all regen-defconfig
 
 # Forward every other target straight to Buildroot.
-%:
+%: | $(BR_MAKEFILE)
 	@$(BR_MAKE) $@
