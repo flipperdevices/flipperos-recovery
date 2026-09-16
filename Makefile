@@ -8,7 +8,8 @@
 #   make clean|distclean |  make <pkg>-rebuild  |  ... any Buildroot target
 #   O=<dir>              override the output directory (default: ./output)
 #
-# Result images land in $(O)/images/: rootfs.cpio and rootfs.cpio.zst
+# Result artifacts land in $(O)/images/: rootfs.cpio{,.zst}, vmlinuz, config,
+# System.map, dtbs/ and - unless SD_IMAGE=0 - recovery.img{,.zst}.
 
 BR2_EXTERNAL := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 O            ?= $(BR2_EXTERNAL)/output
