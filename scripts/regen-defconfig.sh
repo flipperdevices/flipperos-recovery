@@ -2,14 +2,24 @@
 # Regenerate the committed recovery kernel defconfig.
 #
 # Occasional, out-of-band tool (NOT part of the build): run it when you bump the
-# kernel or the config fragments, or edit linux.fragment. It merges the
-# build-scripts base config + feature fragments + our linux.fragment, flips every
-# module to built-in (the recovery kernel is monolithic, the initramfs ships no
-# modules), then `savedefconfig`-trims the result and writes it to
+# kernel or the config fragments, or edit linux.fragment. It fetches its own
+# inputs at the revisions this tree pins, merges the build-scripts base config +
+# feature fragments + our linux.fragment, flips every module to built-in (the
+# recovery kernel is monolithic, the initramfs ships no modules), then
+# `savedefconfig`-trims the result and writes it to
 # board/flipperos-recovery/linux-recovery.defconfig. Review the diff and commit.
+#
+# Everything happens in a scratch directory; no source tree is written to.
 #
 # The normal build (make) just consumes that committed defconfig; it never runs this.
 set -eu
+
+# Start from a known environment. make copies command-line assignments into
+# MAKEFLAGS, and an inherited O= is promoted to "command line" origin by the
+# kernel's own Makefile - so `make regen-defconfig O=<dir>` would otherwise
+# redirect the kernel build somewhere unintended. Unset them so this tool
+# behaves identically however it was invoked.
+unset MAKEFLAGS MFLAGS O KBUILD_OUTPUT 2>/dev/null || true
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 DEFCONFIG="$ROOT/configs/flipperos_recovery_defconfig"
@@ -59,25 +69,34 @@ for f in bluetooth cameras nft rpmb wifi; do
 	[ -f "$BS/configs/linux/$f" ] && frags="$frags $BS/configs/linux/$f"
 done
 
+# Build out-of-tree: every artifact of this run lands in $B and the checkouts stay
+# pristine, so nothing here can leak into a later build. merge_config.sh needs the
+# -O directory to exist already.
+B="$WORK/kbuild"
+rm -rf "$B"
+mkdir -p "$B"
+
+# -y makes built-in win over module while merging, which is the direction we want
+# anyway - the recovery kernel is monolithic.
 cd "$K"
-./scripts/kconfig/merge_config.sh -m $frags "$FRAG" >/dev/null
-make ARCH=arm64 olddefconfig >/dev/null
-# monolithic: flip every module to built-in. olddefconfig can pull in NEW =m
-# symbols as dependencies resolve, so iterate the flip to a fixpoint.
+./scripts/kconfig/merge_config.sh -y -O "$B" -m $frags "$FRAG" >/dev/null
+make -C "$K" O="$B" ARCH=arm64 olddefconfig >/dev/null
+# -y only settles the merge; olddefconfig can still pull in NEW =m symbols as
+# dependencies resolve, so iterate the flip to a fixpoint.
 i=0
-while grep -q '=m$' .config && [ "$i" -lt 8 ]; do
-	sed -i 's/=m$/=y/' .config
-	make ARCH=arm64 olddefconfig >/dev/null
+while grep -q '=m$' "$B/.config" && [ "$i" -lt 8 ]; do
+	sed -i 's/=m$/=y/' "$B/.config"
+	make -C "$K" O="$B" ARCH=arm64 olddefconfig >/dev/null
 	i=$((i + 1))
 done
 # anything still =m cannot be built in (a dependency forbids =y). Do NOT silently
 # drop it: stop and report so a human decides. Encode the resolution explicitly in
 # linux.fragment (set =y with the needed deps, or "# CONFIG_X is not set"), re-run.
-if grep -q '=m$' .config; then
+if grep -q '=m$' "$B/.config"; then
 	echo "ERROR: these refuse to build in - resolve in linux.fragment, then re-run:" >&2
-	grep '=m$' .config | sed 's/=m$//; s/^/  /' >&2
+	grep '=m$' "$B/.config" | sed 's/=m$//; s/^/  /' >&2
 	exit 1
 fi
-make ARCH=arm64 savedefconfig >/dev/null
-cp defconfig "$OUT"
+make -C "$K" O="$B" ARCH=arm64 savedefconfig >/dev/null
+cp "$B/defconfig" "$OUT"
 echo "wrote $OUT ($(grep -c '=y' "$OUT") builtin, 0 modules, $(wc -l < "$OUT") lines)"
