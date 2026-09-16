@@ -39,7 +39,10 @@ BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linu
 BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="4f4c1e72eb2a4f3de0da979d4ada7914a0cabe6b"
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
 BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/linux-recovery.defconfig"
-BR2_LINUX_KERNEL_IMAGE=y
+# Image.gz, staged as images/vmlinuz by external.mk: gzip is what arm64's own
+# KBUILD_IMAGE and install.sh call vmlinuz, so recovery and the main OS present
+# the same artifact to U-Boot's bls bootmeth.
+BR2_LINUX_KERNEL_IMAGEGZ=y
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
 BR2_LINUX_KERNEL_INTREE_DTS_NAME="rockchip/rk3576-flipper-one-rev-f0b0c1"
 # C++ support in the toolchain (selects BR2_INSTALL_LIBSTDCPP): required by
