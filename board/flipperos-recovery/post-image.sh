@@ -10,6 +10,9 @@
 # UFS-LU flash is the device's Falcon path, not this image.
 #
 # Env (all optional):
+#   SD_IMAGE=0        skip this entirely (default 1). The initramfs is the
+#                     deliverable; CI that only wants rootfs.cpio.zst should not
+#                     pay for a 256 MiB disk image it discards.
 #   UBOOT=/path/u-boot-rockchip.bin  embed the Rockchip loader at sector 64 so the
 #                                    SD boots standalone; omit if the on-device
 #                                    U-Boot already scans the SD.
@@ -19,6 +22,11 @@
 #   KVER=<v>          version shown in the BLS entry
 #   CMDLINE=<args>    kernel command line
 set -eu
+
+if [ "${SD_IMAGE:-1}" = 0 ]; then
+	echo "post-image: SD_IMAGE=0, skipping the SD test image"
+	exit 0
+fi
 
 BINARIES_DIR="${1:-${BINARIES_DIR:?}}"
 BUILD_DIR="${BUILD_DIR:-$BINARIES_DIR/../build}"
