@@ -16,29 +16,32 @@ BR2_cortex_a53=y
 # ---------------------------------------------------------------------------
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_OPTIMIZE_S=y
-# Kernel + uapi headers both come from the src/linux SUBMODULE (pinned by gitlink),
-# via override-srcdir (see local.mk): no download, and the Image and the headers
-# the userland compiles against are the EXACT same commit. The series gate
-# (7.0.x+) tells Buildroot how to feature-gate packages. REPO_URL/REPO_VERSION are
-# nominal (override-srcdir supersedes the fetch), kept only to satisfy the config.
+# Kernel + uapi headers both come from flipper-linux-kernel at ONE pinned commit,
+# declared in both places below: the Image and the headers the userland compiles
+# against are the exact same tree by construction, and Buildroot downloads it once
+# (both packages share dl/linux/). Bump the two REPO_VERSION lines together, then
+# re-run scripts/regen-defconfig.sh.
+#
+# The series gate tells Buildroot how to feature-gate packages. CUSTOM_7_0 reads
+# "7.0.x or later" and is the only entry that selects BR2_TOOLCHAIN_HEADERS_LATEST,
+# which is what keeps the headers version check in loose mode - any lower series
+# forces a strict major.minor match and fails. It stays correct as the kernel moves.
 BR2_KERNEL_HEADERS_CUSTOM_GIT=y
 BR2_KERNEL_HEADERS_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
-BR2_KERNEL_HEADERS_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_KERNEL_HEADERS_CUSTOM_REPO_VERSION="4f4c1e72eb2a4f3de0da979d4ada7914a0cabe6b"
 BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_7_0=y
 
-# Build the kernel Image + dtb natively from the same src/linux submodule
-# (override-srcdir), using the committed monolithic defconfig (regenerate with
-# scripts/regen-defconfig.sh). local.mk points both linux + linux-headers at it.
+# Build the kernel Image + dtb natively from that same commit, using the committed
+# monolithic defconfig (regenerate with scripts/regen-defconfig.sh).
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_GIT=y
 BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
-BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="4f4c1e72eb2a4f3de0da979d4ada7914a0cabe6b"
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
 BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/linux-recovery.defconfig"
 BR2_LINUX_KERNEL_IMAGE=y
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
 BR2_LINUX_KERNEL_INTREE_DTS_NAME="rockchip/rk3576-flipper-one-rev-f0b0c1"
-BR2_PACKAGE_OVERRIDE_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/local.mk"
 # C++ support in the toolchain (selects BR2_INSTALL_LIBSTDCPP): required by
 # gptfdisk (gdisk/sgdisk). ~1 MB of libstdc++ in the image.
 BR2_TOOLCHAIN_BUILDROOT_CXX=y

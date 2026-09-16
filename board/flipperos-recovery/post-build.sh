@@ -22,12 +22,6 @@ fi
 # kernel + build-scripts submodules to their branch tips (follow-latest), so they
 # routinely differ from the pinned gitlinks BUILD_GIT resolves to; recording them
 # here makes every image self-describing. -dirty marks local edits in a checkout.
-sub_git() {
-	d="$REPO/$1"
-	v=$(git -C "$d" rev-parse --short HEAD 2>/dev/null) || { echo unknown; return; }
-	git -C "$d" diff --quiet HEAD 2>/dev/null || v="$v-dirty"
-	echo "$v"
-}
 # Versioned packages carry their sha in Buildroot's version-keyed build directory
 # name, which is the sha that was actually built whether it came from the .mk
 # default or an override on the command line.
@@ -35,7 +29,11 @@ pkg_git() {
 	v=$(basename "$(ls -d "${BUILD_DIR:-$(dirname "$TARGET")/build}/$1-"* 2>/dev/null | head -n1)" 2>/dev/null | sed "s/^$1-//")
 	printf %s "${v:-unknown}" | cut -c1-12
 }
-KERNEL_GIT=$(sub_git src/linux)
+# The kernel is pinned in the config Buildroot is building from (exported as
+# BR2_CONFIG), which is the one place that decides which commit gets built.
+KERNEL_GIT=$(sed -n 's/^BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="\(.*\)"$/\1/p' \
+	"${BR2_CONFIG:-${O:-$(dirname "$TARGET")}/.config}" 2>/dev/null || true)
+KERNEL_GIT=$(printf %s "${KERNEL_GIT:-unknown}" | cut -c1-12)
 BUILD_SCRIPTS_GIT=$(pkg_git flipper-usb-gadget)
 BTRFS_TOOLS_GIT=$(pkg_git flipper-btrfs-tools)
 BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)

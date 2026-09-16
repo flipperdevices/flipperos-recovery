@@ -12,11 +12,9 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-K="$ROOT/src/linux"
+DEFCONFIG="$ROOT/configs/flipperos_recovery_defconfig"
 FRAG="$ROOT/board/flipperos-recovery/linux.fragment"
 OUT="$ROOT/board/flipperos-recovery/linux-recovery.defconfig"
-
-[ -f "$K/Makefile" ]  || { echo "error: kernel submodule missing (git submodule update --init src/linux)" >&2; exit 1; }
 
 # Scratch checkouts of the pinned sources. They live in the (gitignored) download
 # cache, so they survive `make distclean` and cost one fetch per bump.
@@ -34,6 +32,17 @@ fetch() {
 		|| git -C "$1" fetch -q --depth 1 origin "$3"
 	git -C "$1" checkout -q --detach "$3"
 }
+
+# $1 = option name; reads a quoted string out of the Buildroot defconfig
+br2_opt() {
+	sed -n "s/^$1=\"\\(.*\\)\"\$/\\1/p" "$DEFCONFIG"
+}
+
+# The kernel is whatever the defconfig pins, so the config this writes always
+# belongs to the kernel the build will use.
+K="$WORK/linux"
+fetch "$K" "$(br2_opt BR2_LINUX_KERNEL_CUSTOM_REPO_URL)" \
+	"$(br2_opt BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION)"
 
 # The config fragments come from the same build-scripts revision the USB-gadget
 # package installs from, so the kernel config and the gadget files that drive it

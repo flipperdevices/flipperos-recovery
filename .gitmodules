@@ -3,8 +3,3 @@
 	url = https://github.com/buildroot/buildroot.git
 	branch = 2026.05.1
 	shallow = true
-[submodule "src/linux"]
-	path = src/linux
-	url = https://github.com/flipperdevices/flipper-linux-kernel.git
-	branch = flipper-devel
-	shallow = true
