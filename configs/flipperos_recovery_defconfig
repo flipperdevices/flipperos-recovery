@@ -16,29 +16,35 @@ BR2_cortex_a53=y
 # ---------------------------------------------------------------------------
 BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
 BR2_OPTIMIZE_S=y
-# Kernel + uapi headers both come from the src/linux SUBMODULE (pinned by gitlink),
-# via override-srcdir (see local.mk): no download, and the Image and the headers
-# the userland compiles against are the EXACT same commit. The series gate
-# (7.0.x+) tells Buildroot how to feature-gate packages. REPO_URL/REPO_VERSION are
-# nominal (override-srcdir supersedes the fetch), kept only to satisfy the config.
+# Kernel + uapi headers both come from flipper-linux-kernel at ONE pinned commit,
+# declared in both places below: the Image and the headers the userland compiles
+# against are the exact same tree by construction, and Buildroot downloads it once
+# (both packages share dl/linux/). Bump the two REPO_VERSION lines together, then
+# re-run scripts/regen-defconfig.sh.
+#
+# The series gate tells Buildroot how to feature-gate packages. CUSTOM_7_0 reads
+# "7.0.x or later" and is the only entry that selects BR2_TOOLCHAIN_HEADERS_LATEST,
+# which is what keeps the headers version check in loose mode - any lower series
+# forces a strict major.minor match and fails. It stays correct as the kernel moves.
 BR2_KERNEL_HEADERS_CUSTOM_GIT=y
 BR2_KERNEL_HEADERS_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
-BR2_KERNEL_HEADERS_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_KERNEL_HEADERS_CUSTOM_REPO_VERSION="4f4c1e72eb2a4f3de0da979d4ada7914a0cabe6b"
 BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_7_0=y
 
-# Build the kernel Image + dtb natively from the same src/linux submodule
-# (override-srcdir), using the committed monolithic defconfig (regenerate with
-# scripts/regen-defconfig.sh). local.mk points both linux + linux-headers at it.
+# Build the kernel Image + dtb natively from that same commit, using the committed
+# monolithic defconfig (regenerate with scripts/regen-defconfig.sh).
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_GIT=y
 BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/flipperdevices/flipper-linux-kernel.git"
-BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="flipper-devel"
+BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="4f4c1e72eb2a4f3de0da979d4ada7914a0cabe6b"
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
 BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/linux-recovery.defconfig"
-BR2_LINUX_KERNEL_IMAGE=y
+# Image.gz, staged as images/vmlinuz by external.mk: gzip is what arm64's own
+# KBUILD_IMAGE and install.sh call vmlinuz, so recovery and the main OS present
+# the same artifact to U-Boot's bls bootmeth.
+BR2_LINUX_KERNEL_IMAGEGZ=y
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
 BR2_LINUX_KERNEL_INTREE_DTS_NAME="rockchip/rk3576-flipper-one-rev-f0b0c1"
-BR2_PACKAGE_OVERRIDE_FILE="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/local.mk"
 # C++ support in the toolchain (selects BR2_INSTALL_LIBSTDCPP): required by
 # gptfdisk (gdisk/sgdisk). ~1 MB of libstdc++ in the image.
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
@@ -181,8 +187,8 @@ BR2_PACKAGE_COMPSIZE=y
 BR2_PACKAGE_DUPEREMOVE=y
 # flipper-btrfs-tools: profile/snapshot shell tooling (create/delete/rename
 # profiles, snapshot send/receive, maintenance, show-space, migrate). Custom package
-# in package/flipper-btrfs-tools, git-fetched at FLIPPER_BTRFS_TOOLS_VERSION (?= dev,
-# overridable); build.sh passes the dev tip sha so builds follow latest and rebuild.
+# in package/flipper-btrfs-tools, git-fetched at a pinned FLIPPER_BTRFS_TOOLS_VERSION
+# (overridable on the make command line).
 BR2_PACKAGE_FLIPPER_BTRFS_TOOLS=y
 # git: migrate-profile (above) 3-way merges user files with `git merge-file`; without
 # it (or mergiraf) the merge step cannot run. Its `-d DEV` recovery mode chroots into
@@ -195,8 +201,11 @@ BR2_PACKAGE_DIFFUTILS=y
 # rsync linked against libacl (xattrs / -X are already supported without it).
 BR2_PACKAGE_ACL=y
 
-# --- USB gadget: vendored gadget scripts (board overlay) build an NCM+MSC+MTP
-#     composite via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---
+# --- USB gadget: the gadget engine, units, .link and udev rules come from the
+#     main OS's build-scripts repo as a versioned package (package/flipper-usb-gadget,
+#     git-fetched at FLIPPER_USB_GADGET_VERSION). They build an NCM+MSC+MTP composite
+#     via configfs; MTP is served by umtprd from a tmpfs ramdisk. ---
+BR2_PACKAGE_FLIPPER_USB_GADGET=y
 BR2_PACKAGE_UMTPRD=y
 
 # ---------------------------------------------------------------------------
@@ -238,6 +247,11 @@ BR2_TARGET_GENERIC_ROOT_PASSWD="flipperone"
 # Create the systemd-network user (systemd ships its tmpfiles unconditionally,
 # but only creates the user when networkd is enabled - we use NetworkManager).
 BR2_ROOTFS_USERS_TABLES="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/users.table"
+
+# Permission table: 0600 on the NetworkManager connection profiles, which git
+# cannot carry. Buildroot's own table is the default value of this option, so it
+# has to be repeated here to keep it.
+BR2_ROOTFS_DEVICE_TABLE="system/device_table.txt $(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/device_table.txt"
 
 BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/rootfs-overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="$(BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH)/board/flipperos-recovery/post-build.sh"

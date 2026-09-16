@@ -8,35 +8,31 @@ TARGET="${TARGET_DIR:-${1:?target directory not provided}}"
 # --- Capture the recovery repo's git version at build time (like the main OS's
 #     BUILD_GIT). Falls back to "unknown" until this tree is a git repo. ---
 REPO="${BR2_EXTERNAL_FLIPPEROS_RECOVERY_PATH:-$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)}"
-# describe without --dirty, then append -dirty only for real edits to the recovery
-# tree. The submodules (src/linux, src/build-scripts) float to their branch tips
-# on every follow-latest build, so submodule pointer drift is expected and must
-# not count as dirty (--ignore-submodules=all).
+# describe without --dirty, then append -dirty for any edit to the recovery tree.
+# Every source is pinned in a tracked file now, so an edit anywhere here - the
+# buildroot gitlink included - genuinely changes what the image is.
 GIT_VERSION=$(git -C "$REPO" describe --tags --always 2>/dev/null || true)
 GIT_VERSION=${GIT_VERSION:-unknown}
 if [ "$GIT_VERSION" != unknown ] \
-   && ! git -C "$REPO" diff --quiet --ignore-submodules=all HEAD 2>/dev/null; then
+   && ! git -C "$REPO" diff --quiet HEAD 2>/dev/null; then
 	GIT_VERSION="$GIT_VERSION-dirty"
 fi
-# Provenance: the exact sources this image was built from. build.sh floats the
-# kernel + build-scripts submodules to their branch tips (follow-latest), so they
-# routinely differ from the pinned gitlinks BUILD_GIT resolves to; recording them
-# here makes every image self-describing. -dirty marks local edits in a checkout.
-sub_git() {
-	d="$REPO/$1"
-	v=$(git -C "$d" rev-parse --short HEAD 2>/dev/null) || { echo unknown; return; }
-	git -C "$d" diff --quiet HEAD 2>/dev/null || v="$v-dirty"
-	echo "$v"
+# Provenance: the exact sources this image was built from, so every image is
+# self-describing even when someone overrides a version on the command line.
+# Versioned packages carry their sha in Buildroot's version-keyed build directory
+# name, which is the sha that was actually built whether it came from the .mk
+# default or an override on the command line.
+pkg_git() {
+	v=$(basename "$(ls -d "${BUILD_DIR:-$(dirname "$TARGET")/build}/$1-"* 2>/dev/null | head -n1)" 2>/dev/null | sed "s/^$1-//")
+	printf %s "${v:-unknown}" | cut -c1-12
 }
-KERNEL_GIT=$(sub_git src/linux)
-BUILD_SCRIPTS_GIT=$(sub_git src/build-scripts)
-# btrfs tools are a versioned package: prefer the sha build.sh resolved+exported,
-# else read it off Buildroot's version-keyed build dir.
-BTRFS_TOOLS_GIT=${FLIPPER_BTRFS_TOOLS_VERSION:-}
-if [ -z "$BTRFS_TOOLS_GIT" ]; then
-	BTRFS_TOOLS_GIT=$(basename "$(ls -d "$(dirname "$TARGET")"/build/flipper-btrfs-tools-* 2>/dev/null | head -n1)" 2>/dev/null | sed 's/^flipper-btrfs-tools-//')
-fi
-BTRFS_TOOLS_GIT=$(printf %s "${BTRFS_TOOLS_GIT:-unknown}" | cut -c1-12)
+# The kernel is pinned in the config Buildroot is building from (exported as
+# BR2_CONFIG), which is the one place that decides which commit gets built.
+KERNEL_GIT=$(sed -n 's/^BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="\(.*\)"$/\1/p' \
+	"${BR2_CONFIG:-${O:-$(dirname "$TARGET")}/.config}" 2>/dev/null || true)
+KERNEL_GIT=$(printf %s "${KERNEL_GIT:-unknown}" | cut -c1-12)
+BUILD_SCRIPTS_GIT=$(pkg_git flipper-usb-gadget)
+BTRFS_TOOLS_GIT=$(pkg_git flipper-btrfs-tools)
 BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)
 
 # --- Brand the OS identity (Buildroot writes a generic Buildroot os-release
@@ -56,33 +52,8 @@ BTRFS_TOOLS_GIT="$BTRFS_TOOLS_GIT"
 BUILD_DATE="$BUILD_DATE"
 EOF
 
-# --- USB-gadget files: pulled from the build-scripts submodule (not vendored, so
-#     they track the main OS) straight into the target. The composite gadget is
-#     auto-started by the enable symlink committed in the overlay; the other
-#     variants' units are deliberately NOT copied - their [Install] lines would let
-#     preset-all enable them and race for the single UDC. ---
-BS="$REPO/src/build-scripts/overlays"
-if [ -d "$BS" ]; then
-	install -d "$TARGET/usr/local/bin" "$TARGET/usr/lib/systemd/system" \
-	           "$TARGET/etc/systemd/network" "$TARGET/etc/udev/rules.d"
-	# gadget engine + preset launcher scripts (manual tools; extras are harmless)
-	install -m 0755 "$BS"/usr/local/bin/usb-*.sh "$TARGET/usr/local/bin/"
-	# only the two units recovery uses: the composite + the Type-C replug helper
-	install -m 0644 "$BS"/configs/systemd/system/usb-ncm-msc-mtp-gadget.service \
-	                "$BS"/configs/systemd/system/usb-gadget-reconnect.service \
-	                "$TARGET/usr/lib/systemd/system/"
-	# flipusb0 rename link + udev rules (90 re-manages flipusb0 in NM by MAC; 91 replug)
-	install -m 0644 "$BS"/configs/systemd/network/10-flipusb.link "$TARGET/etc/systemd/network/"
-	install -m 0644 "$BS"/configs/udev/rules.d/90-flipusb-managed.rules \
-	                "$BS"/configs/udev/rules.d/91-usb-gadget-reconnect.rules \
-	                "$TARGET/etc/udev/rules.d/"
-else
-	echo "post-build: WARNING - build-scripts submodule missing, USB gadget files NOT installed" >&2
-fi
-
-# btrfs profile/snapshot tooling is now the flipper-btrfs-tools package
-# (package/flipper-btrfs-tools, from the src/btrfs-tools submodule), not synced
-# here.
+# USB-gadget files are the flipper-usb-gadget package, and btrfs profile/snapshot
+# tooling the flipper-btrfs-tools package; neither is synced here.
 
 # --- Trim files no package flag removes ---
 # glibc's vectorized-math library: copied in as part of the C runtime, but
@@ -109,9 +80,7 @@ for u in NetworkManager-initrd NetworkManager-config-initrd NetworkManager-wait-
 	rm -f "$TARGET/usr/lib/systemd/system/$u.service" "$TARGET/etc/systemd/system/$u.service"
 done
 
-# --- NetworkManager ignores connection profiles that are group/world readable.
-#     git preserves only the exec bit, not the overlay's 0600, so a fresh clone
-#     ships these 0644 and the AP + bridges never come up. Force 0600 here. ---
-chmod 600 "$TARGET"/etc/NetworkManager/system-connections/*.nmconnection 2>/dev/null || true
+# NetworkManager connection profile permissions are set declaratively, in
+# board/flipperos-recovery/device_table.txt (BR2_ROOTFS_DEVICE_TABLE).
 
-echo "post-build: branded os-release, synced USB gadget files, removed unused libmvec + btrfs debug tools + N/A systemd units, fixed NM connection perms"
+echo "post-build: branded os-release, removed unused libmvec + btrfs debug tools + N/A systemd units"

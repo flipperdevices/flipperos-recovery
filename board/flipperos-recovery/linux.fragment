@@ -11,10 +11,11 @@
 CONFIG_BLK_DEV_INITRD=y
 CONFIG_RD_ZSTD=y
 
-# --- Boot speed: compress the kernel Image with zstd (fast decompress, smaller
-#     Image to read from UFS). Pick exactly one KERNEL_* compressor. ---
-CONFIG_KERNEL_ZSTD=y
-# CONFIG_KERNEL_GZIP is not set
+# NOTE: there is deliberately no CONFIG_KERNEL_* compressor here. arm64 selects
+# no HAVE_KERNEL_* symbol - it has no self-extracting kernel - so those options
+# do not exist and setting one is silently dropped by olddefconfig. The kernel is
+# compressed by building the Image.gz target instead (BR2_LINUX_KERNEL_IMAGEGZ),
+# which is what ships as vmlinuz and what U-Boot decompresses.
 
 # devtmpfs must exist: the pre-init /init mounts it before exec'ing systemd.
 CONFIG_DEVTMPFS=y

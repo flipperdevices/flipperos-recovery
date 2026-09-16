@@ -4,13 +4,12 @@
 #
 ################################################################################
 
-# Tracks the upstream dev branch by default. VERSION is overridable from the
-# environment or the make command line, so a build can pin an exact commit:
+# Pinned to a sha, and bumped like any other dependency. A branch name cannot
+# work here: Buildroot keys both the download cache entry and the build directory
+# on VERSION, so a literal `dev` is fetched once and then never re-fetched or
+# rebuilt however far upstream moves. Override to test a revision:
 #   make FLIPPER_BTRFS_TOOLS_VERSION=<sha>
-# build.sh resolves the dev tip to a sha and passes it, so plain builds follow
-# latest AND Buildroot actually rebuilds (the sha keys the build dir - a moving
-# `dev` alone would stay cached and never rebuild).
-FLIPPER_BTRFS_TOOLS_VERSION ?= dev
+FLIPPER_BTRFS_TOOLS_VERSION ?= de53dfb1524207548952aa58588896bd793a46a5
 FLIPPER_BTRFS_TOOLS_SITE = https://github.com/flipperdevices/flipperos-btrfs-tools.git
 FLIPPER_BTRFS_TOOLS_SITE_METHOD = git
 FLIPPER_BTRFS_TOOLS_LICENSE = MIT

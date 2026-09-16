@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 Flipper FZCO
+#
+# Buildroot permission table (BR2_ROOTFS_DEVICE_TABLE), passed to makedevs.
+# fields: name type mode uid gid major minor start inc count
+#
+# NetworkManager ignores connection profiles that are group- or world-readable,
+# and git records only the exec bit - so a fresh clone would ship the overlay's
+# profiles 0644 and neither the AP nor the bridges would come up. Setting the
+# mode here keeps it independent of whatever mode the checkout produced.
+/etc/NetworkManager/system-connections/br0.nmconnection		f	0600	0	0	-	-	-	-	-
+/etc/NetworkManager/system-connections/br0-eth1.nmconnection	f	0600	0	0	-	-	-	-	-
+/etc/NetworkManager/system-connections/br0-usb.nmconnection	f	0600	0	0	-	-	-	-	-
+/etc/NetworkManager/system-connections/br0-wifi-ap.nmconnection	f	0600	0	0	-	-	-	-	-
+/etc/NetworkManager/system-connections/end0-uplink.nmconnection	f	0600	0	0	-	-	-	-	-
