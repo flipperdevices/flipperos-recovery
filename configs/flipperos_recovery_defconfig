@@ -181,8 +181,8 @@ BR2_PACKAGE_COMPSIZE=y
 BR2_PACKAGE_DUPEREMOVE=y
 # flipper-btrfs-tools: profile/snapshot shell tooling (create/delete/rename
 # profiles, snapshot send/receive, maintenance, show-space, migrate). Custom package
-# in package/flipper-btrfs-tools, git-fetched at FLIPPER_BTRFS_TOOLS_VERSION (?= dev,
-# overridable); build.sh passes the dev tip sha so builds follow latest and rebuild.
+# in package/flipper-btrfs-tools, git-fetched at a pinned FLIPPER_BTRFS_TOOLS_VERSION
+# (overridable on the make command line).
 BR2_PACKAGE_FLIPPER_BTRFS_TOOLS=y
 # git: migrate-profile (above) 3-way merges user files with `git merge-file`; without
 # it (or mergiraf) the merge step cannot run. Its `-d DEV` recovery mode chroots into
