@@ -21,7 +21,7 @@ in their package `.mk` files. The build produces:
 - `output/images/rootfs.cpio` / `rootfs.cpio.zst` - the initramfs (kernel needs `CONFIG_RD_ZSTD`)
 - `output/images/vmlinuz` - the **monolithic** kernel, a gzip-compressed arm64 `Image`
 - `output/images/config` / `System.map` - the effective kernel config and symbol map
-- `output/images/dtbs/rockchip/*.dtb` - the device trees
+- `output/images/dtbs/rockchip/rk3576-*.dtb{,o}` - **every** RK3576 device tree and overlay, so one image boots any Flipper One revision and `add-dtbo` has the overlays to apply
 - `output/images/recovery.img` / `recovery.img.zst` - a flashable **SD test image** (GPT + ext4 **BLS** boot partition), unless `SD_IMAGE=0`
 
 The kernel is **monolithic** (no modules at all), so every driver the recovery
