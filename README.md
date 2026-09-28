@@ -295,9 +295,10 @@ modules): `mt76`/`mt7921u`, `RFKILL`, `cfg80211`/`mac80211`, USB host,
 MediaTek **WiFi + BT** firmware (`MT7921` + `MT7921_BT`) - the combo device
 reset-loops without the BT blob. NM/wpa_supplicant handle rfkill.
 
-The network LEDs follow their ports' carrier through the main OS's
-`99-network-leds.rules`, which the `flipper-usb-gadget` package installs from the
-same repo and pin.
+USB network interfaces are named by MAC address (`wlx...`, `enx...`), as on the
+main OS, by the overlay's `73-usb-net-by-mac.link` (Debian's file). The network
+LEDs follow their ports' carrier through the main OS's `99-network-leds.rules`,
+which the `flipper-usb-gadget` package installs from the same repo and pin.
 
 ### USB gadget (NCM + MTP + mass-storage)
 

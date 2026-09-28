@@ -1,0 +1,8 @@
+# USB network interfaces named by MAC address (wlx..., enx...), as Debian names
+# them on the main OS with this same file from its systemd package.
+[Match]
+Path=*-usb-*
+Property=ID_NET_NAME_MAC=*
+
+[Link]
+NamePolicy=mac
