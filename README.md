@@ -115,7 +115,7 @@ make FLIPCTL_VERSION=<sha>
 | wpa_supplicant / iw / wireless-regdb | - | NM WiFi backend (MT7921U) + regdom |
 | dnsmasq | `BR2_PACKAGE_DNSMASQ` | DHCP on the recovery bridge `br0` (no gateway) |
 | umtprd | `BR2_PACKAGE_UMTPRD` (upstream) | MTP responder for the USB gadget (serves `/mnt/mtp`) |
-| flipper-usb-gadget | `BR2_PACKAGE_FLIPPER_USB_GADGET` | the configfs gadget engine, its composite unit, the `flipusb0` rename and udev rules - shared with the main OS |
+| flipper-usb-gadget | `BR2_PACKAGE_FLIPPER_USB_GADGET` | the configfs gadget engine, its composite unit, the `flipusb0` rename and udev rules, plus the network LED rule - shared with the main OS |
 | linux-firmware (MediaTek MT7921 + BT) | `BR2_PACKAGE_LINUX_FIRMWARE_MEDIATEK_MT7921(_BT)` | MT7961 WiFi + BT firmware blobs |
 | e2fsprogs (+resize2fs) / dosfstools / parted / gptfdisk | - | mkfs/repartition/repair/grow (`mkfs.ext4`, `resize2fs`, `mkfs.vfat`, `parted`, `sgdisk`) |
 | exfatprogs / ntfs-3g (+ntfsprogs) | `BR2_PACKAGE_EXFATPROGS` / `BR2_PACKAGE_NTFS_3G` | create/repair exFAT + NTFS (`mkfs.exfat`, `fsck.exfat`, `mkntfs`, `ntfsfix`, `ntfsresize`) and read-write NTFS via `ntfs-3g` FUSE |
@@ -294,6 +294,10 @@ modules): `mt76`/`mt7921u`, `RFKILL`, `cfg80211`/`mac80211`, USB host,
 **`USB_ONBOARD_DEV`** (powers the onboard hubs the NIC sits behind), and the
 MediaTek **WiFi + BT** firmware (`MT7921` + `MT7921_BT`) - the combo device
 reset-loops without the BT blob. NM/wpa_supplicant handle rfkill.
+
+The network LEDs follow their ports' carrier through the main OS's
+`99-network-leds.rules`, which the `flipper-usb-gadget` package installs from the
+same repo and pin.
 
 ### USB gadget (NCM + MTP + mass-storage)
 

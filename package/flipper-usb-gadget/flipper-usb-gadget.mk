@@ -25,6 +25,9 @@ FLIPPER_USB_GADGET_LICENSE = PROPRIETARY
 # because their [Install] lines would let preset-all enable them and race for the
 # single UDC. The preset *scripts* are harmless as manual tools, so the whole
 # usb-*.sh set comes along with the engine.
+#
+# Not gadget, but from the same repository at the same pin: the rule that lights
+# the network LEDs with their ports' carrier, as on the main OS.
 define FLIPPER_USB_GADGET_INSTALL_TARGET_CMDS
 	for s in $(@D)/overlays/usr/local/bin/usb-*.sh; do \
 		$(INSTALL) -D -m 0755 "$$s" "$(TARGET_DIR)/usr/local/bin/$${s##*/}" ; \
@@ -39,6 +42,8 @@ define FLIPPER_USB_GADGET_INSTALL_TARGET_CMDS
 		$(TARGET_DIR)/etc/udev/rules.d/90-flipusb-managed.rules
 	$(INSTALL) -D -m 0644 $(@D)/overlays/configs/udev/rules.d/91-usb-gadget-reconnect.rules \
 		$(TARGET_DIR)/etc/udev/rules.d/91-usb-gadget-reconnect.rules
+	$(INSTALL) -D -m 0644 $(@D)/overlays/configs/udev/rules.d/99-network-leds.rules \
+		$(TARGET_DIR)/etc/udev/rules.d/99-network-leds.rules
 endef
 
 $(eval $(generic-package))
