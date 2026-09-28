@@ -1,0 +1,20 @@
+config BR2_PACKAGE_FLIPCTL
+	bool "flipctl"
+	depends on BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS # rust
+	depends on BR2_TOOLCHAIN_HAS_THREADS # rust std
+	depends on BR2_USE_MMU
+	depends on BR2_INIT_SYSTEMD # runs from flipctl.service
+	select BR2_PACKAGE_HOST_RUSTC
+	help
+	  flipctl on the Flipper One panel, built without app hosting:
+	  no compositor, no Apps and no App Manager. It opens the SPI
+	  panel's DRM card and reads the buttons from evdev itself, and
+	  runs as root from the repository's flipctl.service with its
+	  recovery drop-in.
+
+	  https://github.com/flipperdevices/flipctl-slint
+
+comment "flipctl needs systemd and a toolchain w/ threads and Rust support"
+	depends on !BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS || \
+		!BR2_TOOLCHAIN_HAS_THREADS || !BR2_INIT_SYSTEMD
+	depends on BR2_USE_MMU

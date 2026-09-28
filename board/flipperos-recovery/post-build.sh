@@ -33,6 +33,7 @@ KERNEL_GIT=$(sed -n 's/^BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="\(.*\)"$/\1/p' \
 KERNEL_GIT=$(printf %s "${KERNEL_GIT:-unknown}" | cut -c1-12)
 BUILD_SCRIPTS_GIT=$(pkg_git flipper-usb-gadget)
 BTRFS_TOOLS_GIT=$(pkg_git flipper-btrfs-tools)
+FLIPCTL_GIT=$(pkg_git flipctl)
 BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)
 
 # --- Brand the OS identity (Buildroot writes a generic Buildroot os-release
@@ -49,6 +50,7 @@ BUILD_GIT="$GIT_VERSION"
 KERNEL_GIT="$KERNEL_GIT"
 BUILD_SCRIPTS_GIT="$BUILD_SCRIPTS_GIT"
 BTRFS_TOOLS_GIT="$BTRFS_TOOLS_GIT"
+FLIPCTL_GIT="$FLIPCTL_GIT"
 BUILD_DATE="$BUILD_DATE"
 EOF
 

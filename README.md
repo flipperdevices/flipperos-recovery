@@ -14,8 +14,9 @@ submodule (pinned to a release). Every other source is pinned by commit sha in a
 tracked file: the kernel ([flipper-linux-kernel](https://github.com/flipperdevices/flipper-linux-kernel))
 in the Buildroot defconfig, and the USB-gadget files
 ([flipperone-linux-build-scripts](https://github.com/flipperdevices/flipperone-linux-build-scripts))
-and btrfs profile/snapshot tooling
+the btrfs profile/snapshot tooling
 ([flipperos-btrfs-tools](https://github.com/flipperdevices/flipperos-btrfs-tools))
+and the panel UI ([flipctl-slint](https://github.com/flipperdevices/flipctl-slint))
 in their package `.mk` files. The build produces:
 
 - `output/images/rootfs.cpio` / `rootfs.cpio.zst` - the initramfs (kernel needs `CONFIG_RD_ZSTD`)
@@ -41,7 +42,7 @@ flash is the device's Falcon path.
 │   └── flipperos_recovery_defconfig   # pins the kernel sha (both linux and linux-headers)
 ├── scripts/
 │   └── regen-defconfig.sh         # regenerate the monolithic kernel defconfig (out-of-band, not part of the build)
-├── package/                       # compsize, duperemove, flipper-btrfs-tools, flipper-usb-gadget
+├── package/                       # compsize, duperemove, flipper-btrfs-tools, flipper-usb-gadget, flipctl
 ├── board/flipperos-recovery/
 │   ├── linux-recovery.defconfig   # the monolithic kernel config - committed, reviewable
 │   ├── linux.fragment             # recovery kernel-config delta (input to regen-defconfig.sh)
@@ -96,6 +97,7 @@ make SD_IMAGE=0                              # skip the SD test image (default 1
 make UBOOT=/path/u-boot-rockchip.bin         # embed U-Boot -> standalone SD-bootable image
 make FLIPPER_BTRFS_TOOLS_VERSION=<sha>       # test another revision of a package
 make FLIPPER_USB_GADGET_VERSION=<sha>
+make FLIPCTL_VERSION=<sha>
 ```
 
 ## What's in the image
@@ -119,6 +121,8 @@ make FLIPPER_USB_GADGET_VERSION=<sha>
 | exfatprogs / ntfs-3g (+ntfsprogs) | `BR2_PACKAGE_EXFATPROGS` / `BR2_PACKAGE_NTFS_3G` | create/repair exFAT + NTFS (`mkfs.exfat`, `fsck.exfat`, `mkntfs`, `ntfsfix`, `ntfsresize`) and read-write NTFS via `ntfs-3g` FUSE |
 | btrfs-progs + compsize + duperemove | `BR2_PACKAGE_BTRFS_PROGS` / `BR2_PACKAGE_COMPSIZE` / `BR2_PACKAGE_DUPEREMOVE` | main-OS root is **btrfs**: check/repair/resize, on-disk compression report, offline dedup |
 | flipper-btrfs-tools | `BR2_PACKAGE_FLIPPER_BTRFS_TOOLS` | btrfs profile/snapshot management (`-d` targets the unmounted OS partition from recovery) |
+| kexec / dtc / tinycbor + cJSON | `BR2_PACKAGE_KEXEC` / `BR2_PACKAGE_DTC_PROGRAMS` / `BR2_PACKAGE_TINYCBOR` | what `boot-profile` needs to boot a profile or an installer FIT: `kexec`, `fdtoverlay`/`fdtget`/`fdtput`, and the `flipmeta` CBOR marker |
+| flipctl | `BR2_PACKAGE_FLIPCTL` | the panel UI (`device,slint,remote`, no app hosting), run as root by the repo's `flipctl.service` + `50-recovery.conf` drop-in; browser view on port 8899 |
 | rsync + sftp-server | `BR2_PACKAGE_RSYNC` / `BR2_PACKAGE_GESFTPSERVER` | file sync, and `scp`/`sftp` over the dropbear SSH server |
 | nvme-cli / sg3-utils | - | NVMe + SCSI/**UFS** device introspection |
 | zstd (CLI) | `BR2_PACKAGE_ZSTD` | de/compress images (the recovery cpio + kernel are zstd) |
@@ -374,8 +378,9 @@ produce the same image.
 | [flipper-linux-kernel](https://github.com/flipperdevices/flipper-linux-kernel) | `BR2_{LINUX_KERNEL,KERNEL_HEADERS}_CUSTOM_REPO_VERSION` in [`configs/flipperos_recovery_defconfig`](configs/flipperos_recovery_defconfig) | the kernel **and** the uapi headers |
 | [flipperone-linux-build-scripts](https://github.com/flipperdevices/flipperone-linux-build-scripts) | `FLIPPER_USB_GADGET_VERSION` in [`package/flipper-usb-gadget`](package/flipper-usb-gadget) | USB-gadget files + the kernel-config fragments |
 | [flipperos-btrfs-tools](https://github.com/flipperdevices/flipperos-btrfs-tools) | `FLIPPER_BTRFS_TOOLS_VERSION` in [`package/flipper-btrfs-tools`](package/flipper-btrfs-tools) | btrfs profile/snapshot tooling |
+| [flipctl-slint](https://github.com/flipperdevices/flipctl-slint) | `FLIPCTL_VERSION` in [`package/flipctl`](package/flipctl) | the panel UI, its unit and recovery drop-in |
 
-A **branch name would not work** for the three package-style sources: Buildroot
+A **branch name would not work** for the four package-style sources: Buildroot
 keys both the download cache entry and the build directory on `VERSION`, and its
 downloader returns early once the tarball exists - so a moving branch is fetched
 once and then pinned forever to whatever it happened to be. Buildroot's own manual
@@ -393,6 +398,7 @@ To test a revision without committing it, override on the command line:
 ```sh
 make FLIPPER_BTRFS_TOOLS_VERSION=<sha>
 make FLIPPER_USB_GADGET_VERSION=<sha>
+make FLIPCTL_VERSION=<sha>
 ```
 
 Tag a commit and a plain `git clone` of that tag reproduces the build - the
@@ -405,7 +411,7 @@ line is still visible in the shipped artifact.
 [`post-build.sh`](board/flipperos-recovery/post-build.sh) stamps
 `/usr/lib/os-release` (also `/etc/os-release`) with `BUILD_GIT` (this repo's
 `git describe`), `KERNEL_GIT` (read from the config Buildroot is building from)
-and `BUILD_SCRIPTS_GIT` / `BTRFS_TOOLS_GIT` (read from Buildroot's version-keyed
+and `BUILD_SCRIPTS_GIT` / `BTRFS_TOOLS_GIT` / `FLIPCTL_GIT` (read from Buildroot's version-keyed
 build directories, so they name the shas actually built). `BUILD_GIT` gains a
 `-dirty` suffix for any edit to this tree, the `buildroot` gitlink included -
 every source is pinned here now, so an edit anywhere genuinely changes what the

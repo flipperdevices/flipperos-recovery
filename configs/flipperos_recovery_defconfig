@@ -200,6 +200,21 @@ BR2_PACKAGE_DIFFUTILS=y
 # acl (libacl): migrate-profile carries files with `rsync -aHAX`; the -A (ACLs) needs
 # rsync linked against libacl (xattrs / -X are already supported without it).
 BR2_PACKAGE_ACL=y
+# What boot-profile needs to boot a profile or an installer FIT: kexec (compressed
+# kernels need its zlib), dtc's fdtoverlay/fdtget/fdtput for the profile's overlays
+# and the live /memory node, and tinycbor for flipmeta's auto-boot marker. Its
+# json2cbor, which writes the marker, is built only when cJSON is selected.
+BR2_PACKAGE_KEXEC=y
+BR2_PACKAGE_KEXEC_ZLIB=y
+BR2_PACKAGE_DTC=y
+BR2_PACKAGE_DTC_PROGRAMS=y
+BR2_PACKAGE_TINYCBOR=y
+BR2_PACKAGE_CJSON=y
+
+# flipctl on the panel, without app hosting. Custom package in package/flipctl,
+# git-fetched at a pinned FLIPCTL_VERSION (overridable on the make command line).
+# The unit and its recovery drop-in ship from the flipctl-slint repo.
+BR2_PACKAGE_FLIPCTL=y
 
 # --- USB gadget: the gadget engine, units, .link and udev rules come from the
 #     main OS's build-scripts repo as a versioned package (package/flipper-usb-gadget,
